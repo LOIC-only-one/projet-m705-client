@@ -1,0 +1,9 @@
+{% extends "base.j2" %}
+{% block content %}
+<div class="p-5 bg-white rounded shadow-sm">
+  <h1 class="display-6">Bienvenue à la vidéothèque</h1>
+  <p class="lead text-muted">
+    {% if connecte %}Vous êtes connecté.{% else %}Connectez-vous ou créez un compte pour emprunter des films.{% endif %}
+  </p>
+</div>
+{% endblock %}
