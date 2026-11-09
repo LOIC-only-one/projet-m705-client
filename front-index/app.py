@@ -8,7 +8,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 app.jinja_env.autoescape = True  # pas actif par défaut pour les .j2
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)  # x_proto : request.is_secure suit le https de Caddy
 
 API_AUTH = os.environ.get("API_AUTH_URL", "http://api-auth:8000")
 API_USER = os.environ.get("API_USER_URL", "http://api-user:8000")
@@ -71,9 +71,9 @@ def login():
     jetons = reponse_api.json()
     redirection = redirect(url_for("index"))
     redirection.set_cookie("access_token", jetons["access_token"], max_age=jetons["expires_in"],
-                           httponly=True, secure=True, samesite="Strict")
+                           httponly=True, secure=request.is_secure, samesite="Strict")
     redirection.set_cookie("refresh_token", reponse_api.cookies["refresh_token"], max_age=7 * 24 * 3600,
-                           httponly=True, secure=True, samesite="Strict")
+                           httponly=True, secure=request.is_secure, samesite="Strict")
     return redirection
 
 
@@ -103,8 +103,8 @@ def logout():
         appel_api(API_AUTH, "/api/auth/logout", cookies={"refresh_token": refresh_token})
 
     redirection = redirect(url_for("index"))
-    redirection.delete_cookie("access_token", httponly=True, secure=True, samesite="Strict")
-    redirection.delete_cookie("refresh_token", httponly=True, secure=True, samesite="Strict")
+    redirection.delete_cookie("access_token", httponly=True, secure=request.is_secure, samesite="Strict")
+    redirection.delete_cookie("refresh_token", httponly=True, secure=request.is_secure, samesite="Strict")
     return redirection
 
 

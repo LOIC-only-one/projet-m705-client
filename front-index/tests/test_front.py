@@ -38,7 +38,7 @@ def test_autoescape():
 def test_login(client):
     reponse_api = fausse_reponse_api(200, {"access_token": "acc", "expires_in": 900}, {"refresh_token": "ref"})
     with patch("app.requests.post", return_value=reponse_api) as faux_post:
-        page = client.post("/login", data={"email": "a@b.fr", "password": "x"})
+        page = client.post("/login", data={"email": "a@b.fr", "password": "x"}, base_url="https://localhost")
 
     assert page.status_code == 302
     assert faux_post.call_args.kwargs["json"] == {"email": "a@b.fr", "password": "x"}
@@ -53,7 +53,7 @@ def test_login(client):
 def test_login_mauvais_mdp(client):
     erreur = {"code": "IDENTIFIANTS_INVALIDES", "message": "Email ou mot de passe incorrect."}
     with patch("app.requests.post", return_value=fausse_reponse_api(401, {"error": erreur})):
-        page = client.post("/login", data={"email": "a@b.fr", "password": "x"})
+        page = client.post("/login", data={"email": "a@b.fr", "password": "x"}, base_url="https://localhost")
 
     assert page.status_code == 401
     assert "Email ou mot de passe incorrect." in page.text
@@ -71,7 +71,7 @@ def test_register_invalide(client):
 
 def test_api_down(client):
     with patch("app.requests.post", side_effect=requests.ConnectionError):
-        page = client.post("/login", data={"email": "a@b.fr", "password": "x"})
+        page = client.post("/login", data={"email": "a@b.fr", "password": "x"}, base_url="https://localhost")
 
     assert page.status_code == 503
 
