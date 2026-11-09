@@ -1,3 +1,4 @@
+import base64
 import json
 from unittest.mock import patch
 
@@ -83,3 +84,29 @@ def test_logout(client):
     assert page.status_code == 302
     assert faux_post.call_args.kwargs["cookies"] == {"refresh_token": "ref"}
     assert client.get_cookie("refresh_token") is None
+
+
+JETON = "x." + base64.urlsafe_b64encode(json.dumps({"sub": "abc123"}).encode()).decode().rstrip("=") + ".x"
+
+
+def test_account_non_connecte(client):
+    assert client.get("/account").status_code == 302
+
+
+def test_account_get(client):
+    client.set_cookie("access_token", JETON)
+    user = {"id": "abc123", "username": "bob", "email": "b@b.fr", "birthdate": "2000-01-01", "role": "user", "photo_profil": None}
+    with patch("app.requests.get", return_value=fausse_reponse_api(200, user)) as faux_get:
+        reponse = client.get("/account")
+    assert reponse.status_code == 200
+    assert b'value="bob"' in reponse.data
+    assert faux_get.call_args.args[0].endswith("/api/users/abc123")
+    assert faux_get.call_args.kwargs["headers"]["Authorization"] == "Bearer " + JETON
+
+
+def test_account_patch(client):
+    client.set_cookie("access_token", JETON)
+    with patch("app.requests.patch", return_value=fausse_reponse_api(200, {})) as faux_patch:
+        reponse = client.post("/account", data={"username": "bob2", "email": "", "photo_profil": ""})
+    assert reponse.status_code == 302
+    assert faux_patch.call_args.kwargs["json"] == {"username": "bob2"}

@@ -13,6 +13,7 @@
       <a class="navbar-brand" href="{{ url_for('index') }}">Vidéothèque</a>
       {% if connecte %}
       <form method="post" action="{{ url_for('logout') }}">
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('account') }}">Mon compte</a>
         <button class="btn btn-outline-light btn-sm">Déconnexion</button>
       </form>
       {% else %}

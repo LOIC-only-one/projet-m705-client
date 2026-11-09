@@ -1,8 +1,9 @@
+import base64
+import json
 import os
 
 import requests
 from flask import Flask, redirect, render_template, request, url_for
-from flask_jwt_extended import get_jwt_identity
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
@@ -14,11 +15,13 @@ API_USER = os.environ.get("API_USER_URL", "http://api-user:8000")
 API_CATALOG = os.environ.get("API_CATALOG_URL", "http://api-catalogue:8000")
 
 
-def appel_api(api, route, donnees=None, cookies=None):
+def appel_api(api, route, donnees=None, cookies=None, methode="POST", jeton=None):
     # on transmet l'ip du client pour le rate limit de api-auth
     headers = {"X-Forwarded-For": request.remote_addr}
+    if jeton:
+        headers["Authorization"] = "Bearer " + jeton
     try:
-        return requests.post(api + route, json=donnees, cookies=cookies, headers=headers, timeout=5)
+        return getattr(requests, methode.lower())(api + route, json=donnees, cookies=cookies, headers=headers, timeout=5)
     except requests.RequestException:
         return None
 
@@ -105,39 +108,35 @@ def logout():
     return redirection
 
 
+def id_utilisateur(jeton):
+    # le front n'a pas le secret : on lit juste le "sub", c'est api-user qui vérifie la signature
+    try:
+        charge = jeton.split(".")[1]
+        return json.loads(base64.urlsafe_b64decode(charge + "=" * (-len(charge) % 4)))["sub"]
+    except Exception:
+        return None
+
+
 @app.route("/account", methods=["GET", "POST"])
 def account():
-    current_user_id = get_jwt_identity()
+    jeton = request.cookies.get("access_token")
+    id_user = id_utilisateur(jeton) if jeton else None
+    if id_user is None:
+        return redirect(url_for("login"))
 
     if request.method == "GET":
-        reponse_api = appel_api(API_USER,f"/api/users/{current_user_id}")
+        reponse_api = appel_api(API_USER, f"/api/users/{id_user}", methode="GET", jeton=jeton)
         if reponse_api is None or not reponse_api.ok:
-            user_data = {}
-        else:
-            user_data = reponse_api.json()
-            # Si photo_profil est null (None), on met une chaîne vide pour le formulaire
-            if user_data.get("photo_profil") is None:
-                user_data["photo_profil"] = ""
-                
-        return render_template("register.j2", form=user_data)
+            message, code_http = erreur_api(reponse_api)
+            return render_template("account.j2", erreur=message, form={}), code_http
+        return render_template("account.j2", form=reponse_api.json())
 
-    # Récupération des données du formulaire pour le PATCH
-    modif_utilisateur = {
-        "username": request.form.get("username", ""),
-        "email": request.form.get("email", ""),
-        "birthdate": request.form.get("birthdate", ""),
-        "photo_profil": request.form.get("photo_profil", ""),
-        # Note : On n'envoie le rôle que si l'utilisateur a le droit de le modifier, 
-        # sinon l'API risque de le rejeter ou de l'ignorer.
-        "role": request.form.get("role", "user") 
-    }
-    
-    # Appel de l'API en PATCH avec l'ID dynamique
-    reponse_api = appel_api(API_USER,f"/api/users/{current_user_id}", modif_utilisateur, method="PATCH")
-    
+    # champs vides non envoyés : l'API refuse une date vide et le rôle n'est pas modifiable ici
+    champs = ("username", "email", "birthdate", "photo_profil")
+    modif_utilisateur = {c: request.form[c] for c in champs if request.form.get(c)}
+    reponse_api = appel_api(API_USER, f"/api/users/{id_user}", modif_utilisateur, methode="PATCH", jeton=jeton)
     if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)
-        # On réaffiche le formulaire avec les saisies en cours en cas d'erreur
-        return render_template("register.j2", erreur=message, form=request.form), code_http
+        return render_template("account.j2", erreur=message, form=request.form), code_http
 
     return redirect(url_for("account"))

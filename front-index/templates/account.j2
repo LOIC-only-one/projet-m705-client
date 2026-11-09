@@ -13,9 +13,6 @@
           </button>
         </div>
 
-        {% if erreur %}
-          <div class="alert alert-danger" role="alert">{{ erreur }}</div>
-        {% endif %}
 
         <form method="POST">
           <div class="mb-3">
@@ -31,22 +28,14 @@
           </div>
 
           <div class="mb-3">
-            <label for="password" class="form-label">Nouveau mot de passe <small class="text-muted">(Laisser vide si inchangé)</small></label>
-            <input type="password" class="form-control editable-field" id="password" name="password" minlength="12" autocomplete="new-password" disabled>
-          </div>
-
-          <div class="mb-3">
             <label for="birthdate" class="form-label">Date de naissance</label>
             <input type="date" class="form-control editable-field" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required disabled>
           </div>
 
           <div class="mb-3">
             <label for="photo_profil" class="form-label">Photo de profil (URL)</label>
-            <input type="text" class="form-control editable-field" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil', '') }}" disabled>
+            <input type="text" class="form-control editable-field" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}" disabled>
           </div>
-
-          <!-- Champ caché pour conserver le rôle existant lors du POST -->
-          <input type="hidden" name="role" value="{{ form.get('role', 'user') }}">
 
           <!-- Bouton Enregistrer (caché par défaut) -->
           <div id="save-container" class="d-none">
