@@ -14,11 +14,11 @@ API_USER = os.environ.get("API_USER_URL", "http://api-user:8000")
 API_CATALOG = os.environ.get("API_CATALOG_URL", "http://api-catalogue:8000")
 
 
-def appel_api(route, donnees=None, cookies=None):
+def appel_api(api, route, donnees=None, cookies=None):
     # on transmet l'ip du client pour le rate limit de api-auth
     headers = {"X-Forwarded-For": request.remote_addr}
     try:
-        return requests.post(API_AUTH + route, json=donnees, cookies=cookies, headers=headers, timeout=5)
+        return requests.post(api + route, json=donnees, cookies=cookies, headers=headers, timeout=5)
     except requests.RequestException:
         return None
 
@@ -60,7 +60,7 @@ def login():
 
     email = request.form.get("email", "")
     mot_de_passe = request.form.get("password", "")
-    reponse_api = appel_api("/api/auth/login", {"email": email, "password": mot_de_passe})
+    reponse_api = appel_api(API_AUTH, "/api/auth/login", {"email": email, "password": mot_de_passe})
     if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)
         return render_template("login.j2", erreur=message, email=email), code_http
@@ -85,7 +85,7 @@ def register():
         "password": request.form.get("password", ""),
         "birthdate": request.form.get("birthdate", ""),
     }
-    reponse_api = appel_api("/api/auth/register", nouvel_utilisateur)
+    reponse_api = appel_api(API_AUTH, "/api/auth/register", nouvel_utilisateur)
     if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)
         return render_template("register.j2", erreur=message, form=request.form), code_http
@@ -97,7 +97,7 @@ def register():
 def logout():
     refresh_token = request.cookies.get("refresh_token")
     if refresh_token:
-        appel_api("/api/auth/logout", cookies={"refresh_token": refresh_token})
+        appel_api(API_AUTH, "/api/auth/logout", cookies={"refresh_token": refresh_token})
 
     redirection = redirect(url_for("index"))
     redirection.delete_cookie("access_token", httponly=True, secure=True, samesite="Strict")
@@ -110,7 +110,7 @@ def account():
     current_user_id = get_jwt_identity()
 
     if request.method == "GET":
-        reponse_api = appel_api(f"/api/users/{current_user_id}")
+        reponse_api = appel_api(API_USER,f"/api/users/{current_user_id}")
         if reponse_api is None or not reponse_api.ok:
             user_data = {}
         else:
@@ -133,7 +133,7 @@ def account():
     }
     
     # Appel de l'API en PATCH avec l'ID dynamique
-    reponse_api = appel_api(f"/api/users/{current_user_id}", modif_utilisateur, method="PATCH")
+    reponse_api = appel_api(API_USER,f"/api/users/{current_user_id}", modif_utilisateur, method="PATCH")
     
     if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)
