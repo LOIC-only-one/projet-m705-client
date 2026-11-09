@@ -9,6 +9,8 @@ app.jinja_env.autoescape = True  # pas actif par défaut pour les .j2
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
 API_AUTH = os.environ.get("API_AUTH_URL", "http://api-auth:8000")
+API_USER = os.environ.get("API_USER_URL", "http://api-user:8000")
+API_CATALOG = os.environ.get("API_CATALOG_URL", "http://api-catalogue:8000")
 
 
 def appel_api(route, donnees=None, cookies=None):
