@@ -2,6 +2,7 @@ import os
 
 import requests
 from flask import Flask, redirect, render_template, request, url_for
+from flask_jwt_extended import get_jwt_identity
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
@@ -102,3 +103,41 @@ def logout():
     redirection.delete_cookie("access_token", httponly=True, secure=True, samesite="Strict")
     redirection.delete_cookie("refresh_token", httponly=True, secure=True, samesite="Strict")
     return redirection
+
+
+@app.route("/account", methods=["GET", "POST"])
+def account():
+    current_user_id = get_jwt_identity()
+
+    if request.method == "GET":
+        reponse_api = appel_api(f"/api/users/{current_user_id}")
+        if reponse_api is None or not reponse_api.ok:
+            user_data = {}
+        else:
+            user_data = reponse_api.json()
+            # Si photo_profil est null (None), on met une chaîne vide pour le formulaire
+            if user_data.get("photo_profil") is None:
+                user_data["photo_profil"] = ""
+                
+        return render_template("register.j2", form=user_data)
+
+    # Récupération des données du formulaire pour le PATCH
+    modif_utilisateur = {
+        "username": request.form.get("username", ""),
+        "email": request.form.get("email", ""),
+        "birthdate": request.form.get("birthdate", ""),
+        "photo_profil": request.form.get("photo_profil", ""),
+        # Note : On n'envoie le rôle que si l'utilisateur a le droit de le modifier, 
+        # sinon l'API risque de le rejeter ou de l'ignorer.
+        "role": request.form.get("role", "user") 
+    }
+    
+    # Appel de l'API en PATCH avec l'ID dynamique
+    reponse_api = appel_api(f"/api/users/{current_user_id}", modif_utilisateur, method="PATCH")
+    
+    if reponse_api is None or not reponse_api.ok:
+        message, code_http = erreur_api(reponse_api)
+        # On réaffiche le formulaire avec les saisies en cours en cas d'erreur
+        return render_template("register.j2", erreur=message, form=request.form), code_http
+
+    return redirect(url_for("account"))
