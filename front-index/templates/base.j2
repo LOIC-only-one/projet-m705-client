@@ -43,11 +43,36 @@
         <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
         <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
       </ul>
+
+      <button id="dropdownDividerButton" data-dropdown-toggle="dropdownDivider" class="inline-flex items-center justify-center text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none" type="button">
+        Menu 
+        <svg class="w-4 h-4 ms-1.5 -me-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
+      </button>
+
+      <!-- Dropdown menu -->
+      <div id="dropdownDivider" class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base divide-y divide-default-medium shadow-lg w-44">
+          <form method="post" action="{{ url_for('logout') }}" class="flex items-center gap-4 text-sm">
+            <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDividerButton">
+              <li>
+                {% if admin %}<a class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded" href="{{ url_for('admin') }}">Administration</a>{% endif %}
+              </li>
+              <li>
+                <a class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Mon compte</a>
+              </li>
+            </ul>
+            <div class="p-2 text-sm text-body font-medium">
+              <button class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Déconnexion</button>
+            </div>
+          </form>
+      </div>
+
+      /* 
       <form method="post" action="{{ url_for('logout') }}" class="flex items-center gap-4 text-sm">
         {% if admin %}<a class="hover:text-blue-600" href="{{ url_for('admin') }}">Administration</a>{% endif %}
         <a class="hover:text-blue-600" href="{{ url_for('account') }}">Mon compte</a>
         <button class="text-slate-600 hover:text-blue-600">Déconnexion</button>
       </form>
+      */
       {% else %}
       <div class="ml-auto flex gap-4 text-sm">
         <a class="hover:text-blue-600" href="{{ url_for('login') }}">Connexion</a>
