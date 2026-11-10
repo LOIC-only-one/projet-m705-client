@@ -1,4 +1,4 @@
-# À chaque push sur main : build des images api-auth et api-catalogue et push sur ghcr.io
+# À chaque push sur main : build de l'image du front et push sur ghcr.io
 name: ci-cd
 
 on:
@@ -21,6 +21,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
+          context: ./front-index
+          file: ./front-index/Dockerfile
           push: true
           tags: |
             ghcr.io/loic-only-one/videotheque-front-index:${{ github.sha }}
