@@ -5,36 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Vidéothèque{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
+          colors: { brand: { 500: "#6366f1", 600: "#4f46e5", 700: "#4338ca" } }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     .affiche { aspect-ratio: 2 / 3; object-fit: cover; }
     .affiche-vide { aspect-ratio: 2 / 3; }
     .miniature { width: 48px; aspect-ratio: 2 / 3; object-fit: cover; }
+    button, a, input, select { transition: all 150ms ease; }
+    input:focus, select:focus { outline: 2px solid #818cf8; outline-offset: 1px; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-900">
-  <nav class="mb-8 bg-slate-900 text-white shadow">
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100 font-sans text-slate-900">
+  <nav class="mb-10 border-b border-white/10 bg-slate-950 text-white shadow-lg">
     <div class="mx-auto flex max-w-7xl items-center gap-6 px-4 py-4">
-      <a class="font-semibold" href="{{ url_for('index') }}">Vidéothèque</a>
+      <a class="flex items-center gap-2 text-lg font-bold tracking-tight" href="{{ url_for('index') }}">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm">V</span>
+        Vidéothèque
+      </a>
       {% if connecte %}
-      <ul class="mr-auto flex gap-4 text-sm text-slate-300">
-        <li><a class="{{ 'font-semibold text-white' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
-        <li><a class="{{ 'font-semibold text-white' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
+      <ul class="mr-auto flex gap-1 text-sm text-slate-300">
+        <li><a class="inline-block rounded-lg px-3 py-2 hover:bg-white/10 hover:text-white {{ 'bg-white/10 font-semibold text-white' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
+        <li><a class="inline-block rounded-lg px-3 py-2 hover:bg-white/10 hover:text-white {{ 'bg-white/10 font-semibold text-white' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
       </ul>
       <form method="post" action="{{ url_for('logout') }}" class="flex gap-2">
-        <a class="rounded border border-slate-500 px-3 py-1.5 text-sm hover:bg-slate-800" href="{{ url_for('account') }}">Mon compte</a>
-        <button class="rounded border border-slate-500 px-3 py-1.5 text-sm hover:bg-slate-800">Déconnexion</button>
+        <a class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 hover:bg-white/10" href="{{ url_for('account') }}">Mon compte</a>
+        <button class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 hover:bg-white/10">Déconnexion</button>
       </form>
       {% else %}
       <div class="ml-auto flex gap-2">
-        <a class="rounded border border-slate-500 px-3 py-1.5 text-sm hover:bg-slate-800" href="{{ url_for('login') }}">Connexion</a>
-        <a class="rounded bg-blue-600 px-3 py-1.5 text-sm hover:bg-blue-500" href="{{ url_for('register') }}">Inscription</a>
+        <a class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 hover:bg-white/10" href="{{ url_for('login') }}">Connexion</a>
+        <a class="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium hover:bg-brand-500" href="{{ url_for('register') }}">Inscription</a>
       </div>
       {% endif %}
     </div>
   </nav>
 
   <main class="mx-auto max-w-7xl px-4 pb-12">
-    {% if erreur %}<div class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-red-800" role="alert">{{ erreur }}</div>{% endif %}
+    {% if erreur %}<div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm" role="alert">{{ erreur }}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
 </body>

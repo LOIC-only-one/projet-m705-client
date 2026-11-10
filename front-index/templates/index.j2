@@ -2,18 +2,22 @@
 {% import "_film.j2" as f %}
 {% block content %}
 {% if not connecte %}
-<div class="rounded-lg bg-white p-8 shadow">
-  <h1 class="text-3xl font-semibold">Bienvenue à la vidéothèque</h1>
-  <p class="my-3 text-lg text-slate-500">Déclarez les films que vous possédez et empruntez ceux des autres membres.</p>
-  <a class="inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500" href="{{ url_for('register') }}">Créer un compte</a>
-  <a class="ml-2 inline-block rounded border border-slate-300 px-4 py-2 hover:bg-slate-50" href="{{ url_for('login') }}">Se connecter</a>
+<div class="relative overflow-hidden rounded-2xl bg-slate-950 p-8 text-white shadow-xl sm:p-12">
+  <div class="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-600/30 blur-3xl"></div>
+  <div class="relative max-w-2xl">
+    <p class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">Votre cinéma, autrement</p>
+    <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Partagez vos films.<br><span class="text-indigo-300">Découvrez-en d'autres.</span></h1>
+    <p class="my-5 max-w-xl text-lg leading-8 text-slate-300">Déclarez les films que vous possédez et empruntez ceux des autres membres de la vidéothèque.</p>
+    <a class="inline-block rounded-lg bg-brand-500 px-5 py-3 font-semibold shadow-lg shadow-indigo-950/30 hover:bg-brand-400" href="{{ url_for('register') }}">Créer un compte</a>
+    <a class="ml-2 inline-block rounded-lg border border-slate-600 px-5 py-3 font-medium hover:bg-white/10" href="{{ url_for('login') }}">Se connecter</a>
+  </div>
 </div>
 {% else %}
 <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-  <h1 class="text-2xl font-semibold">Catalogue <span class="text-sm font-normal text-slate-500">{{ films | length }} film{{ 's' if films | length > 1 }}</span></h1>
-  <form method="get" class="flex flex-wrap items-center gap-2" role="search">
-    <input type="search" name="q" value="{{ q }}" class="rounded border border-slate-300 bg-white px-3 py-2" placeholder="Rechercher un titre…" aria-label="Rechercher un titre" maxlength="100">
-    <select name="genre" class="rounded border border-slate-300 bg-white px-3 py-2" aria-label="Genre">
+  <h1 class="text-2xl font-bold tracking-tight">Catalogue <span class="text-sm font-normal text-slate-500">{{ films | length }} film{{ 's' if films | length > 1 }}</span></h1>
+  <form method="get" class="rounded-xl border border-slate-200 bg-white/80 p-2 shadow-sm backdrop-blur sm:flex sm:flex-wrap sm:items-center" role="search">
+    <input type="search" name="q" value="{{ q }}" class="rounded-lg border-0 bg-transparent px-3 py-2 placeholder:text-slate-400" placeholder="Rechercher un titre…" aria-label="Rechercher un titre" maxlength="100">
+    <select name="genre" class="rounded-lg border-0 bg-transparent px-3 py-2" aria-label="Genre">
       <option value="">Tous les genres</option>
       {% for g in genres %}<option {{ 'selected' if g == genre }}>{{ g }}</option>{% endfor %}
     </select>
@@ -21,8 +25,8 @@
       <input class="h-4 w-4" type="checkbox" name="dispo" value="1" id="dispo" {{ 'checked' if dispo }}>
       <label for="dispo">Disponibles</label>
     </div>
-    <button class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500">Filtrer</button>
-    {% if q or genre or dispo %}<a class="rounded border border-slate-300 px-4 py-2 hover:bg-white" href="{{ url_for('index') }}">Effacer</a>{% endif %}
+    <button class="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white hover:bg-brand-500">Filtrer</button>
+    {% if q or genre or dispo %}<a class="rounded-lg px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900" href="{{ url_for('index') }}">Effacer</a>{% endif %}
   </form>
 </div>
 
@@ -30,7 +34,7 @@
 <div class="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
   {% for film in films %}
   <article>
-    <div class="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow">
+    <div class="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl">
       <a href="{{ url_for('film', film_id=film.id) }}">
         {% if film.affiche %}
         <img src="{{ film.affiche }}" class="affiche w-full" alt="Affiche de {{ film.titre }}" loading="lazy">

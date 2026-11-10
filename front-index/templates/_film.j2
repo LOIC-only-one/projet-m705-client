@@ -14,12 +14,12 @@
     {% if film.disponibles %}
     <form method="post" action="{{ url_for('emprunter') }}" class="grid">
       <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
-      <button class="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-500 {{ taille }}">Emprunter</button>
+      <button class="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500 {{ taille }}">Emprunter</button>
     </form>
     {% endif %}
     <form method="post" action="{{ url_for('ajouter_exemplaire') }}" class="grid">
       <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
-      <button class="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 {{ taille }}">J'ai ce film</button>
+      <button class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:border-slate-400 hover:bg-slate-50 {{ taille }}">J'ai ce film</button>
     </form>
   {% endif %}
 {% endmacro %}
