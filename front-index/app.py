@@ -218,6 +218,12 @@ def register():
         "password": request.form.get("password", ""),
         "birthdate": request.form.get("birthdate", ""),
     }
+    if nouvel_utilisateur["password"] != request.form.get("password_confirmation", ""):
+        return render_template(
+            "register.j2",
+            erreur="Les mots de passe ne correspondent pas.",
+            form=request.form,
+        ), 400
     reponse_api = appel_api(API_AUTH, "/api/auth/register", nouvel_utilisateur)
     if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)

@@ -22,6 +22,10 @@
             <div class="mt-1 text-sm text-slate-500">12 caractères minimum.</div>
           </div>
           <div class="mb-4">
+            <label for="password_confirmation" class="mb-1 block text-sm font-medium">Confirmer le mot de passe</label>
+            <input type="password" class="w-full border border-slate-300 px-3 py-2" id="password_confirmation" name="password_confirmation" required minlength="12" autocomplete="new-password">
+          </div>
+          <div class="mb-4">
             <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
             <input type="date" class="w-full border border-slate-300 px-3 py-2" id="birthdate" name="birthdate" value="{{ form.birthdate }}" required>
           </div>
