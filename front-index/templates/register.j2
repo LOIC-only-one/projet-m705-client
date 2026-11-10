@@ -1,36 +1,32 @@
 {% extends "base.j2" %}
 {% block title %}Inscription · Vidéothèque{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h1 class="h4 mb-3">Inscription</h1>
+<div class="mx-auto max-w-md">
+  <div class="rounded-lg bg-white p-6 shadow">
+        <h1 class="mb-4 text-xl font-semibold">Inscription</h1>
         <form method="post">
-          <div class="mb-3">
-            <label for="username" class="form-label">Nom d'utilisateur</label>
-            <input class="form-control" id="username" name="username" value="{{ form.username }}" required
+          <div class="mb-4">
+            <label for="username" class="mb-1 block text-sm font-medium">Nom d'utilisateur</label>
+            <input class="w-full rounded border border-slate-300 px-3 py-2" id="username" name="username" value="{{ form.username }}" required
                    pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="username">
-            <div class="form-text">3 à 50 caractères : lettres, chiffres, _ . -</div>
+            <div class="mt-1 text-sm text-slate-500">3 à 50 caractères : lettres, chiffres, _ . -</div>
           </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ form.email }}" required maxlength="255" autocomplete="email">
+          <div class="mb-4">
+            <label for="email" class="mb-1 block text-sm font-medium">Email</label>
+            <input type="email" class="w-full rounded border border-slate-300 px-3 py-2" id="email" name="email" value="{{ form.email }}" required maxlength="255" autocomplete="email">
           </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe</label>
-            <input type="password" class="form-control" id="password" name="password" required minlength="12" autocomplete="new-password">
-            <div class="form-text">12 caractères minimum.</div>
+          <div class="mb-4">
+            <label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label>
+            <input type="password" class="w-full rounded border border-slate-300 px-3 py-2" id="password" name="password" required minlength="12" autocomplete="new-password">
+            <div class="mt-1 text-sm text-slate-500">12 caractères minimum.</div>
           </div>
-          <div class="mb-3">
-            <label for="birthdate" class="form-label">Date de naissance</label>
-            <input type="date" class="form-control" id="birthdate" name="birthdate" value="{{ form.birthdate }}" required>
+          <div class="mb-4">
+            <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
+            <input type="date" class="w-full rounded border border-slate-300 px-3 py-2" id="birthdate" name="birthdate" value="{{ form.birthdate }}" required>
           </div>
-          <button type="submit" class="btn btn-primary w-100">Créer le compte</button>
+          <button type="submit" class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500">Créer le compte</button>
         </form>
-        <p class="mt-3 mb-0 text-center">Déjà inscrit ? <a href="{{ url_for('login') }}">Connexion</a></p>
-      </div>
-    </div>
+        <p class="mt-4 text-center text-sm">Déjà inscrit ? <a class="text-blue-600 hover:underline" href="{{ url_for('login') }}">Connexion</a></p>
   </div>
 </div>
 {% endblock %}

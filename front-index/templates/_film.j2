@@ -1,25 +1,25 @@
 {# Statut et actions d'un film, partagés entre le catalogue et la fiche film. #}
 {% macro statut(film) %}
-  {% if film.possede %}<span class="badge text-bg-primary">Dans ma vidéothèque</span>
-  {% elif film.emprunte %}<span class="badge text-bg-info">Emprunté</span>
-  {% elif film.disponibles %}<span class="badge text-bg-success">{{ film.disponibles }} disponible{{ 's' if film.disponibles > 1 }}</span>
-  {% else %}<span class="badge text-bg-secondary">Indisponible</span>
+  {% if film.possede %}<span class="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">Dans ma vidéothèque</span>
+  {% elif film.emprunte %}<span class="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-800">Emprunté</span>
+  {% elif film.disponibles %}<span class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">{{ film.disponibles }} disponible{{ 's' if film.disponibles > 1 }}</span>
+  {% else %}<span class="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">Indisponible</span>
   {% endif %}
 {% endmacro %}
 
-{% macro actions(film, depuis="catalogue", taille="btn-sm") %}
+{% macro actions(film, depuis="catalogue", taille="") %}
   {% if film.emprunte %}
-  <a class="btn btn-outline-info {{ taille }}" href="{{ url_for('videotheque') }}">Voir mes emprunts</a>
+  <a class="rounded border border-cyan-500 px-3 py-1.5 text-sm text-cyan-700 hover:bg-cyan-50 {{ taille }}" href="{{ url_for('videotheque') }}">Voir mes emprunts</a>
   {% elif not film.possede %}
     {% if film.disponibles %}
-    <form method="post" action="{{ url_for('emprunter') }}" class="d-grid">
+    <form method="post" action="{{ url_for('emprunter') }}" class="grid">
       <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
-      <button class="btn btn-primary {{ taille }}">Emprunter</button>
+      <button class="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-500 {{ taille }}">Emprunter</button>
     </form>
     {% endif %}
-    <form method="post" action="{{ url_for('ajouter_exemplaire') }}" class="d-grid">
+    <form method="post" action="{{ url_for('ajouter_exemplaire') }}" class="grid">
       <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
-      <button class="btn btn-outline-secondary {{ taille }}">J'ai ce film</button>
+      <button class="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 {{ taille }}">J'ai ce film</button>
     </form>
   {% endif %}
 {% endmacro %}

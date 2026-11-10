@@ -2,23 +2,23 @@
 {% import "_film.j2" as f %}
 {% block title %}{{ film.titre if film else 'Film' }} · Vidéothèque{% endblock %}
 {% block content %}
-<a class="d-inline-block mb-3" href="{{ url_for('index') }}">← Retour au catalogue</a>
+<a class="mb-4 inline-block text-blue-600 hover:underline" href="{{ url_for('index') }}">← Retour au catalogue</a>
 {% if film %}
-<div class="row g-4">
-  <div class="col-md-4 col-lg-3">
+<div class="grid gap-8 md:grid-cols-3">
+  <div>
     {% if film.affiche %}
-    <img src="{{ film.affiche }}" class="img-fluid rounded shadow-sm affiche w-100" alt="Affiche de {{ film.titre }}">
+    <img src="{{ film.affiche }}" class="affiche w-full rounded shadow" alt="Affiche de {{ film.titre }}">
     {% else %}
-    <div class="affiche-vide rounded bg-secondary-subtle d-flex align-items-center justify-content-center text-muted">Pas d'affiche</div>
+    <div class="affiche-vide flex items-center justify-center rounded bg-slate-200 text-slate-500">Pas d'affiche</div>
     {% endif %}
   </div>
-  <div class="col-md-8 col-lg-9">
-    <h1 class="h2 mb-1">{{ film.titre }}</h1>
-    <p class="text-muted">{{ film.annee }}</p>
-    <p>{% for g in film.genres %}<a class="badge rounded-pill text-bg-light border text-decoration-none me-1" href="{{ url_for('index', genre=g) }}">{{ g }}</a>{% endfor %}</p>
-    <p class="mb-3">{{ f.statut(film) }}</p>
-    <p class="lead fs-6">{{ film.synopsis or "Pas de synopsis disponible." }}</p>
-    <div class="d-flex flex-wrap gap-2 mt-4">{{ f.actions(film, depuis="fiche", taille="") }}</div>
+  <div class="md:col-span-2">
+    <h1 class="mb-1 text-2xl font-semibold">{{ film.titre }}</h1>
+    <p class="text-slate-500">{{ film.annee }}</p>
+    <p>{% for g in film.genres %}<a class="mr-1 inline-block rounded-full border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50" href="{{ url_for('index', genre=g) }}">{{ g }}</a>{% endfor %}</p>
+    <p class="my-4">{{ f.statut(film) }}</p>
+    <p class="text-lg text-slate-600">{{ film.synopsis or "Pas de synopsis disponible." }}</p>
+    <div class="mt-4 flex flex-wrap gap-2">{{ f.actions(film, depuis="fiche", taille="") }}</div>
   </div>
 </div>
 {% endif %}

@@ -1,51 +1,49 @@
 {% extends "base.j2" %}
 {% block title %}Mon compte · Vidéothèque{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h1 class="h4 m-0">Mon compte</h1>
+<div class="mx-auto max-w-xl">
+    <div class="rounded-lg bg-white p-6 shadow">
+        <div class="mb-5 flex items-center justify-between">
+          <h1 class="text-xl font-semibold">Mon compte</h1>
           <!-- Bouton pour activer l'édition de tous les champs -->
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="enable-edit-btn" onclick="toggleEditMode()">
-            <i class="bi bi-pencil"></i> Modifier le profil
+          <button type="button" class="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50" id="enable-edit-btn" onclick="toggleEditMode()">
+            Modifier le profil
           </button>
         </div>
 
 
         <form method="POST">
-          <div class="mb-3">
-            <label for="username" class="form-label">Nom d'utilisateur</label>
-            <input class="form-control editable-field" id="username" name="username" value="{{ form.get('username', '') }}" required
+          <div class="mb-4">
+            <label for="username" class="mb-1 block text-sm font-medium">Nom d'utilisateur</label>
+            <input class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="username" name="username" value="{{ form.get('username', '') }}" required
                    pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="username" disabled>
-            <div class="form-text">3 à 50 caractères : lettres, chiffres, _ . -</div>
+            <div class="mt-1 text-sm text-slate-500">3 à 50 caractères : lettres, chiffres, _ . -</div>
           </div>
 
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control editable-field" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="email" disabled>
+          <div class="mb-4">
+            <label for="email" class="mb-1 block text-sm font-medium">Email</label>
+            <input type="email" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="email" disabled>
           </div>
 
-          <div class="mb-3">
-            <label for="birthdate" class="form-label">Date de naissance</label>
-            <input type="date" class="form-control editable-field" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required disabled>
+          <div class="mb-4">
+            <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
+            <input type="date" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required disabled>
           </div>
 
-          <div class="mb-3">
-            <label for="photo_profil" class="form-label">Photo de profil (URL)</label>
-            <input type="text" class="form-control editable-field" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}" disabled>
+          <div class="mb-4">
+            <label for="photo_profil" class="mb-1 block text-sm font-medium">Photo de profil (URL)</label>
+            <input type="text" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}" disabled>
           </div>
 
-          <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe</label>
-            <input type="password" class="form-control editable-field" id="password" name="password" required minlength="12" autocomplete="new-password" placeholder="************" disabled>
-            <div class="form-text">12 caractères minimum.</div>
+          <div class="mb-4">
+            <label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label>
+            <input type="password" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="password" name="password" required minlength="12" autocomplete="new-password" placeholder="************" disabled>
+            <div class="mt-1 text-sm text-slate-500">12 caractères minimum.</div>
           </div>
 
           <!-- Bouton Enregistrer (caché par défaut) -->
-          <div id="save-container" class="d-none">
-            <button type="submit" class="btn btn-primary w-100">Enregistrer les modifications</button>
+          <div id="save-container" class="hidden">
+            <button type="submit" class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500">Enregistrer les modifications</button>
           </div>
         </form>
       </div>
@@ -63,14 +61,14 @@ function toggleEditMode() {
         field.disabled = !field.disabled;
     });
 
-    saveContainer.classList.toggle('d-none');
+    saveContainer.classList.toggle('hidden');
     
-    if (saveContainer.classList.contains('d-none')) {
+    if (saveContainer.classList.contains('hidden')) {
         editBtn.innerHTML = 'Modifier le profil';
-        editBtn.classList.replace('btn-outline-danger', 'btn-outline-secondary');
+        editBtn.classList.replace('border-red-300', 'border-slate-300');
     } else {
         editBtn.innerHTML = 'Annuler';
-        editBtn.classList.replace('btn-outline-secondary', 'btn-outline-danger');
+        editBtn.classList.replace('border-slate-300', 'border-red-300');
     }
 }
 </script>

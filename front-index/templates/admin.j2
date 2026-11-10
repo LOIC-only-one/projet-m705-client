@@ -1,75 +1,74 @@
 {% extends "base.j2" %}
 {% block title %}Administration · Vidéothèque{% endblock %}
 {% block content %}
-<h1 class="h3 mb-4">Administration
-  <span class="text-muted fs-6">{{ utilisateurs | length }} utilisateur{{ 's' if utilisateurs | length > 1 }}</span>
+<h1 class="mb-6 text-2xl font-semibold">Administration
+  <span class="text-sm font-normal text-slate-500">{{ utilisateurs | length }} utilisateur{{ 's' if utilisateurs | length > 1 }}</span>
 </h1>
 
-{% if supprime %}<div class="alert alert-success">Utilisateur supprimé.</div>{% endif %}
+{% if supprime %}<div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-800">Utilisateur supprimé.</div>{% endif %}
 
-<div class="row g-4">
-  <div class="col-md-5 col-lg-4">
-    <div class="list-group shadow-sm">
+<div class="grid gap-8 md:grid-cols-3">
+  <div>
+    <div class="overflow-hidden rounded-lg bg-white shadow">
       {% for u in utilisateurs %}
-      <a class="list-group-item list-group-item-action {{ 'active' if u.id == selection }}"
+      <a class="block border-b border-slate-200 p-4 last:border-0 {{ 'bg-blue-50' if u.id == selection else 'hover:bg-slate-50' }}"
          href="{{ url_for('admin', user=u.id) }}" {% if u.id == selection %}aria-current="true"{% endif %}>
-        <span class="fw-semibold">{{ u.username }}</span><br>
-        <span class="small opacity-75">{{ u.email }}</span>
+        <span class="font-semibold">{{ u.username }}</span><br>
+        <span class="text-sm text-slate-500">{{ u.email }}</span>
       </a>
       {% else %}
-      <div class="list-group-item text-muted">Aucun utilisateur.</div>
+      <div class="p-4 text-slate-500">Aucun utilisateur.</div>
       {% endfor %}
     </div>
   </div>
 
-  <div class="col-md-7 col-lg-8">
+  <div class="md:col-span-2">
     {% if selection %}
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h5 mb-1">Utilisateur</h2>
-        <p class="font-monospace small text-muted mb-3">
+    <div class="rounded-lg bg-white p-6 shadow">
+        <h2 class="mb-1 text-lg font-semibold">Utilisateur</h2>
+        <p class="mb-4 font-mono text-sm text-slate-500">
           {{ selection }}{% if form.get('created_at') %} · inscrit le {{ form.get('created_at')[:10] }}{% endif %}
         </p>
-        {% if modifie %}<div class="alert alert-success">Utilisateur mis à jour.</div>{% endif %}
+        {% if modifie %}<div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-800">Utilisateur mis à jour.</div>{% endif %}
 
         <form method="post" action="{{ url_for('admin_modifier_utilisateur', id=selection) }}">
-          <div class="mb-3">
-            <label for="username" class="form-label">Nom d'utilisateur</label>
-            <input class="form-control" id="username" name="username" value="{{ form.get('username', '') }}" required
+          <div class="mb-4">
+            <label for="username" class="mb-1 block text-sm font-medium">Nom d'utilisateur</label>
+            <input class="w-full rounded border border-slate-300 px-3 py-2" id="username" name="username" value="{{ form.get('username', '') }}" required
                    pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="off">
-            <div class="form-text">3 à 50 caractères : lettres, chiffres, _ . -</div>
+            <div class="mt-1 text-sm text-slate-500">3 à 50 caractères : lettres, chiffres, _ . -</div>
           </div>
 
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="off">
+          <div class="mb-4">
+            <label for="email" class="mb-1 block text-sm font-medium">Email</label>
+            <input type="email" class="w-full rounded border border-slate-300 px-3 py-2" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="off">
           </div>
 
-          <div class="mb-3">
-            <label for="birthdate" class="form-label">Date de naissance</label>
-            <input type="date" class="form-control" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required>
+          <div class="mb-4">
+            <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
+            <input type="date" class="w-full rounded border border-slate-300 px-3 py-2" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required>
           </div>
 
-          <div class="mb-3">
-            <label for="photo_profil" class="form-label">Photo de profil (URL)</label>
-            <input type="text" class="form-control" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}">
-            <div class="form-text">Laissez vide pour supprimer la photo.</div>
+          <div class="mb-4">
+            <label for="photo_profil" class="mb-1 block text-sm font-medium">Photo de profil (URL)</label>
+            <input type="text" class="w-full rounded border border-slate-300 px-3 py-2" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}">
+            <div class="mt-1 text-sm text-slate-500">Laissez vide pour supprimer la photo.</div>
           </div>
 
-          <div class="mb-3">
-            <label for="role" class="form-label">Rôle</label>
-            <select class="form-select" id="role" name="role">
+          <div class="mb-4">
+            <label for="role" class="mb-1 block text-sm font-medium">Rôle</label>
+            <select class="w-full rounded border border-slate-300 bg-white px-3 py-2" id="role" name="role">
               {% for r in ('user', 'admin') %}
               <option value="{{ r }}" {{ 'selected' if form.get('role') == r }}>{{ r }}</option>
               {% endfor %}
             </select>
-            <div class="form-text">Le nouveau rôle s'applique à la prochaine connexion de l'utilisateur (jeton d'accès de 15 min).</div>
+            <div class="mt-1 text-sm text-slate-500">Le nouveau rôle s'applique à la prochaine connexion de l'utilisateur (jeton d'accès de 15 min).</div>
           </div>
 
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-grow-1">Enregistrer les modifications</button>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-grow rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500">Enregistrer les modifications</button>
             {% if selection != moi %}{# un admin ne peut pas se supprimer lui-même #}
-            <button type="submit" class="btn btn-outline-danger" formnovalidate
+            <button type="submit" class="rounded border border-red-300 px-4 py-2 text-red-700 hover:bg-red-50" formnovalidate
                     formaction="{{ url_for('admin_supprimer_utilisateur', id=selection) }}"
                     onclick="return confirm('Supprimer définitivement cet utilisateur ?')">Supprimer l'utilisateur</button>
             {% endif %}
@@ -78,7 +77,7 @@
       </div>
     </div>
     {% elif utilisateurs %}
-    <p class="text-muted">Sélectionnez un utilisateur dans la liste pour afficher et modifier son compte.</p>
+    <p class="text-slate-500">Sélectionnez un utilisateur dans la liste pour afficher et modifier son compte.</p>
     {% endif %}
   </div>
 </div>
