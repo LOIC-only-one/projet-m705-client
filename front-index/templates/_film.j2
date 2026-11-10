@@ -2,6 +2,7 @@
 {% macro statut(film) %}
   {% if film.possede %}<span class="text-sm font-medium text-blue-700">Dans ma vidéothèque</span>
   {% elif film.emprunte %}<span class="text-sm font-medium text-cyan-700">Emprunté</span>
+  {% elif not film.empruntable %}<span class="text-sm text-slate-600">Emprunt indisponible avant la sortie</span>
   {% elif film.disponibles %}<span class="text-sm font-medium text-green-700">{{ film.disponibles }} disponible{{ 's' if film.disponibles > 1 }}</span>
   {% else %}<span class="text-sm text-slate-600">Indisponible</span>
   {% endif %}
@@ -11,7 +12,7 @@
   {% if film.emprunte %}
   <a class="ui-action border border-cyan-500 px-3 py-1.5 text-sm text-cyan-700 hover:bg-cyan-50 {{ taille }}" href="{{ url_for('videotheque') }}">Voir mes emprunts</a>
   {% elif not film.possede %}
-    {% if film.disponibles %}
+    {% if film.disponibles and film.empruntable %}
     <form method="post" action="{{ url_for('emprunter') }}" class="grid">
       <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
       <button class="ui-action bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 {{ taille }}">Emprunter</button>

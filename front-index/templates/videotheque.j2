@@ -34,7 +34,7 @@
       {% endfor %}
     </ul>
     {% else %}
-    <p class="text-slate-500">Aucun emprunt. <a class="text-blue-600 hover:underline" href="{{ url_for('index', dispo=1) }}">Voir les films disponibles</a></p>
+    <p class="text-slate-500">Aucun emprunt. <a class="text-blue-600 hover:underline" href="{{ url_for('catalogue', dispo=1) }}">Voir les films disponibles</a></p>
     {% endif %}
 
     {% if historique %}
@@ -73,7 +73,7 @@
       {% endfor %}
     </ul>
     {% else %}
-    <p class="text-slate-500">Vous n'avez déclaré aucun film. Cliquez sur « J'ai ce film » dans le <a class="text-blue-600 hover:underline" href="{{ url_for('index') }}">catalogue</a>.</p>
+    <p class="text-slate-500">Vous n'avez déclaré aucun film. Cliquez sur « J'ai ce film » dans le <a class="text-blue-600 hover:underline" href="{{ url_for('catalogue') }}">catalogue</a>.</p>
     {% endif %}
   </section>
 </div>

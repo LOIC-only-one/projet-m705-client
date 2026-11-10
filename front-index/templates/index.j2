@@ -11,47 +11,38 @@
   </div>
 </div>
 {% else %}
-<div class="animate-fade-up mb-6">
-  <h1 class="text-2xl font-semibold">Catalogue <span class="text-sm font-normal text-slate-500">{{ films | length }} film{{ 's' if films | length > 1 }}</span></h1>
-  <form method="get" class="mt-3 flex flex-wrap items-center gap-2" role="search">
-    <input type="search" name="q" value="{{ q }}" class="h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 placeholder:text-slate-400 sm:w-72" placeholder="Rechercher un titre" aria-label="Rechercher un titre" maxlength="100">
-    <select name="genre" class="h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 sm:w-48" aria-label="Genre">
-      <option value="">Tous les genres</option>
-      {% for g in genres %}<option {{ 'selected' if g == genre }}>{{ g }}</option>{% endfor %}
-    </select>
-    <label class="flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm">
-      <input class="h-4 w-4" type="checkbox" name="dispo" value="1" id="dispo" {{ 'checked' if dispo }}>
-      Disponibles
-    </label>
-    <button class="ui-action h-10 rounded-md bg-blue-600 px-4 font-medium text-white hover:bg-blue-700">Filtrer</button>
-    {% if q or genre or dispo %}<a class="px-2 py-2 text-sm text-slate-500 hover:text-slate-900" href="{{ url_for('index') }}">Effacer</a>{% endif %}
-  </form>
+<div class="animate-fade-up mb-6 flex items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Films à découvrir</h1>
+    <p class="mt-1 text-slate-600">Une sélection de films de la vidéothèque.</p>
+  </div>
+  <a class="ui-action rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50" href="{{ url_for('catalogue') }}">Voir tout le catalogue</a>
 </div>
 
-{% if films %}
-<div class="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
-  {% for film in films %}
-  <article class="film-card" style="animation-delay: {{ [loop.index0 * 55, 500] | min }}ms">
-    <div class="flex h-full flex-col overflow-hidden rounded-md border border-slate-300 bg-white">
-      <a class="poster-link" href="{{ url_for('film', film_id=film.id) }}">
-        {% if film.affiche %}
-        <img src="{{ film.affiche }}" class="affiche w-full" alt="Affiche de {{ film.titre }}" loading="lazy">
-        {% else %}
-        <div class="affiche-vide flex items-center justify-center bg-slate-200 text-slate-500">Pas d'affiche</div>
-        {% endif %}
-      </a>
-      <div class="flex flex-1 flex-col p-4">
-        <h2 class="mb-1 font-semibold"><a class="hover:text-blue-600" href="{{ url_for('film', film_id=film.id) }}">{{ film.titre }}</a></h2>
-        <p class="mb-2 text-sm text-slate-500">{{ film.annee }}{% if film.genres %} · {{ film.genres[:2] | join(', ') }}{% endif %}</p>
-        <p class="mb-3">{{ f.statut(film) }}</p>
-        <div class="mt-auto grid gap-2">{{ f.actions(film) }}</div>
+{% for section in sections %}
+<section class="mb-8">
+  <h2 class="mb-3 text-lg font-semibold">Sélection {{ loop.index }}</h2>
+  <div class="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
+    {% for film in section %}
+    <article class="film-card" style="animation-delay: {{ [loop.index0 * 55, 500] | min }}ms">
+      <div class="flex h-full flex-col overflow-hidden rounded-md border border-slate-300 bg-white">
+        <a class="poster-link" href="{{ url_for('film', film_id=film.id) }}">
+          {% if film.affiche %}<img src="{{ film.affiche }}" class="affiche w-full" alt="Affiche de {{ film.titre }}" loading="lazy">
+          {% else %}<div class="affiche-vide flex items-center justify-center bg-slate-200 text-slate-500">Pas d'affiche</div>{% endif %}
+        </a>
+        <div class="flex flex-1 flex-col p-4">
+          <h3 class="mb-1 font-semibold"><a class="hover:text-blue-600" href="{{ url_for('film', film_id=film.id) }}">{{ film.titre }}</a></h3>
+          <p class="mb-2 text-sm text-slate-500">{{ film.annee }}</p>
+          <p class="mb-3">{{ f.statut(film) }}</p>
+          <div class="mt-auto grid gap-2">{{ f.actions(film) }}</div>
+        </div>
       </div>
-    </div>
-  </article>
-  {% endfor %}
-</div>
-{% elif not erreur %}
-<p class="text-slate-500">Aucun film ne correspond à ces critères.</p>
-{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<p class="text-slate-500">Aucun film disponible.</p>
+{% endfor %}
 {% endif %}
 {% endblock %}

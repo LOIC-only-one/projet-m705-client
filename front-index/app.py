@@ -24,14 +24,17 @@ def appel_api(api, route, donnees=None, cookies=None, methode="POST", jeton=None
     if jeton:
         headers["Authorization"] = "Bearer " + jeton
     try:
-        return getattr(requests, methode.lower())(api + route, json=donnees, cookies=cookies, headers=headers, timeout=5)
+        timeout = 180 if api == API_CATALOG else 5
+        return getattr(requests, methode.lower())(
+            api + route, json=donnees, cookies=cookies, headers=headers, timeout=timeout
+        )
     except requests.RequestException:
         return None
 
 
 def erreur_api(reponse_api):
     if reponse_api is None:
-        return "Service d'authentification indisponible.", 503
+        return "Service indisponible.", 503
     try:
         erreur = reponse_api.json()["error"]
     except Exception:
@@ -129,19 +132,45 @@ def action_film(route):
     return action_catalogue(route, index, {"film_id": film_id})
 
 
+def charger_films(filtres, dispo, page=1, per_page=20):
+    jeton = jeton_acces()
+    if not jeton:
+        return [], [], {}, None
+    params_dict = dict(filtres)
+    params_dict["page"] = page
+    params_dict["per_page"] = per_page
+    params = urlencode(params_dict)
+    donnees, erreur = lire_catalogue("/api/films" + ("?" + params if params else ""), jeton)
+    films = []
+    for film_data in donnees.get("films", []):
+        if film_data.get("disponibles") or not dispo:
+            films.append(film_data)
+    return films, donnees.get("genres", []), donnees, erreur
+
+
 @app.get("/")
 def index(erreur=None):
+    if request.args.get("q") or request.args.get("genre") or request.args.get("dispo"):
+        return redirect(url_for("catalogue", **request.args))
+    films, unused_genres, donnees, erreur_films = charger_films({}, False, per_page=20)
+    sections = []
+    for start in range(0, min(len(films), 20), 5):
+        sections.append(films[start:start + 5])
+    return render_template("index.j2", sections=sections, erreur=erreur or erreur_films,
+                           total=donnees.get("total", 0))
+
+
+@app.get("/catalogue")
+def catalogue(erreur=None):
     filtres = {"q": request.args.get("q", "").strip(), "genre": request.args.get("genre", "")}
     dispo = request.args.get("dispo") == "1"
-    films, genres = [], []
-    jeton = jeton_acces()
-    if jeton:
-        params = urlencode({k: v for k, v in filtres.items() if v})
-        donnees, erreur_films = lire_catalogue("/api/films" + ("?" + params if params else ""), jeton)
-        films = [f for f in donnees.get("films", []) if f.get("disponibles") or not dispo]
-        genres = donnees.get("genres", [])
-        erreur = erreur or erreur_films
-    return render_template("index.j2", films=films, genres=genres, dispo=dispo, erreur=erreur, **filtres)
+    page = max(request.args.get("page", 1, type=int), 1)
+    films, genres, donnees, erreur_films = charger_films(filtres, dispo, page=page)
+    if donnees.get("pages") and page > donnees["pages"]:
+        return redirect(url_for("catalogue", **filtres, dispo="1" if dispo else None, page=donnees["pages"]))
+    return render_template("catalogue.j2", films=films, genres=genres, dispo=dispo,
+                           page=page, pages=donnees.get("pages", 0), total=donnees.get("total", 0),
+                           erreur=erreur or erreur_films, **filtres)
 
 
 @app.get("/films/<int:film_id>")
@@ -160,10 +189,16 @@ def videotheque(erreur=None):
         return redirect(url_for("login"))
     exemplaires, erreur_ex = lire_catalogue("/api/exemplaires", jeton)
     emprunts, erreur_emp = lire_catalogue("/api/emprunts", jeton)
-    emprunts = emprunts.get("emprunts", [])
+    liste_emprunts = emprunts.get("emprunts", [])
+    en_cours = []
+    historique = []
+    for emprunt in liste_emprunts:
+        if emprunt.get("date_retour"):
+            historique.append(emprunt)
+        else:
+            en_cours.append(emprunt)
     return render_template("videotheque.j2", exemplaires=exemplaires.get("exemplaires", []),
-                           en_cours=[e for e in emprunts if not e.get("date_retour")],
-                           historique=[e for e in emprunts if e.get("date_retour")],
+                           en_cours=en_cours, historique=historique,
                            erreur=erreur or erreur_ex or erreur_emp)
 
 

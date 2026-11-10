@@ -41,7 +41,7 @@
         <a class="mr-6 text-lg font-semibold text-slate-900" href="{{ url_for('index') }}">Vidéothèque</a>
         {% if connecte %}
         <ul class="flex gap-4 text-sm">
-          <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
+          <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint in ('index', 'catalogue') }}" href="{{ url_for('catalogue') }}">Catalogue</a></li>
           <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
         </ul>
         {% endif %}
