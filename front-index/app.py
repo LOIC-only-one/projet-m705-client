@@ -85,11 +85,32 @@ def jeton_acces():
     return g.jetons[0]["access_token"] if g.get("jetons") else request.cookies.get("access_token")
 
 
+def profil_navbar(jeton):
+    """Pseudo et photo de profil (URL) de l'utilisateur connecté, via GET /api/users/<id>.
+
+    Mis en cache dans g : un seul appel par requête, même si plusieurs templates sont rendus.
+    En cas d'échec de l'API, la navbar retombe sur l'initiale du pseudo (ou un "?").
+    """
+    if "profil_navbar" not in g:
+        g.profil_navbar = {}
+        id_user = id_utilisateur(jeton) if jeton else None
+        if id_user:
+            reponse_api = appel_api(API_USER, f"/api/users/{quote(str(id_user))}", methode="GET", jeton=jeton)
+            if reponse_api is not None and reponse_api.ok:
+                g.profil_navbar = reponse_api.json()
+    return g.profil_navbar
+
+
 @app.context_processor
 def utilisateur_connecte():
     # "admin" sert seulement à afficher le lien du menu : l'API vérifie le jeton et refuse (403) les non-admins
-    return {"connecte": "refresh_token" in request.cookies and g.get("jetons") is not False,
-            "admin": charge_jeton(jeton_acces() or "").get("role") == "admin"}
+    jeton = jeton_acces()
+    connecte = "refresh_token" in request.cookies and g.get("jetons") is not False
+    profil = profil_navbar(jeton) if connecte and jeton else {}
+    return {"connecte": connecte,
+            "admin": charge_jeton(jeton or "").get("role") == "admin",
+            "photo_profil": profil.get("photo_profil"),
+            "nom_utilisateur": profil.get("username", "")}
 
 
 @app.get("/health")

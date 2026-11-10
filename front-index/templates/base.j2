@@ -49,9 +49,13 @@
 
       {% if connecte %}
       <div class="relative">
-        <button id="dropdownDividerButton" class="inline-flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-blue-300 transition" type="button">
-          Menu 
-          <svg class="w-4 h-4 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
+        <button id="dropdownDividerButton" class="relative block h-10 w-10 overflow-hidden rounded-full border border-slate-300 bg-blue-600 transition hover:ring-4 hover:ring-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-300" type="button" aria-label="Menu du compte" aria-haspopup="true" title="{{ nom_utilisateur }}">
+          {# repli (initiale) : en dessous de l'image, visible si la photo est absente ou ne charge pas #}
+          <span class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white" aria-hidden="true">{{ (nom_utilisateur[:1] or '?') | upper }}</span>
+          {% if photo_profil %}
+          <img src="{{ photo_profil }}" alt="Photo de profil de {{ nom_utilisateur }}" class="relative h-full w-full bg-white object-cover" referrerpolicy="no-referrer"
+               onerror="this.remove()">
+          {% endif %}
         </button>
 
         <!-- Dropdown menu -->
