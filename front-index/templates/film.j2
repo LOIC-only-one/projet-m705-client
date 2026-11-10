@@ -2,12 +2,14 @@
 {% import "_film.j2" as f %}
 {% block title %}{{ film.titre if film else 'Film' }} · Vidéothèque{% endblock %}
 {% block content %}
-<a class="mb-4 inline-block text-blue-600 hover:underline" href="{{ url_for('index') }}">← Retour au catalogue</a>
+<a class="ui-action mb-5 inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700" href="{{ url_for('index') }}">
+  <span aria-hidden="true"></span> Retour au catalogue
+</a>
 {% if film %}
 <div class="grid gap-8 md:grid-cols-3">
   <div>
     {% if film.affiche %}
-    <img src="{{ film.affiche }}" class="affiche w-full rounded shadow" alt="Affiche de {{ film.titre }}">
+    <img src="{{ film.affiche }}" class="affiche w-full border border-slate-300" alt="Affiche de {{ film.titre }}">
     {% else %}
     <div class="affiche-vide flex items-center justify-center rounded bg-slate-200 text-slate-500">Pas d'affiche</div>
     {% endif %}
@@ -22,7 +24,7 @@
     {% if film.bande_annonce %}
     <div class="mt-8">
       <h2 class="mb-3 text-lg font-semibold">Bande-annonce</h2>
-      <div class="aspect-video overflow-hidden rounded-xl bg-slate-950 shadow-lg">
+      <div class="aspect-video overflow-hidden border border-slate-300 bg-slate-950">
         <iframe class="h-full w-full" src="{{ film.bande_annonce }}" title="Bande-annonce de {{ film.titre }}"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowfullscreen loading="lazy"></iframe>

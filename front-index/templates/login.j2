@@ -1,31 +1,22 @@
 {% extends "base.j2" %}
 {% block title %}Connexion · Vidéothèque{% endblock %}
 {% block content %}
-<div class="mx-auto grid max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl md:grid-cols-2">
-  <div class="hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-brand-700 p-10 text-white md:flex md:flex-col md:justify-between">
-    <div>
-      <span class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">Bon retour</span>
-      <h1 class="mt-4 text-3xl font-bold">Retrouvez votre cinéma.</h1>
-      <p class="mt-4 leading-7 text-slate-300">Accédez à votre collection et découvrez les films disponibles auprès des autres membres.</p>
-    </div>
-    <p class="text-sm text-slate-400">Une vidéothèque pensée pour le partage.</p>
-  </div>
-  <div class="p-6 sm:p-10">
+<div class="mx-auto max-w-md rounded-md border border-slate-300 bg-white p-6 sm:p-10">
+  <div>
         <h1 class="mb-1 text-2xl font-bold">Connexion</h1>
         <p class="mb-6 text-sm text-slate-500">Connectez-vous pour retrouver votre vidéothèque.</p>
         {% if inscrit %}<div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-800">Compte créé, vous pouvez vous connecter.</div>{% endif %}
         <form method="post">
           <div class="mb-4">
             <label for="email" class="mb-1 block text-sm font-medium">Email</label>
-            <input type="email" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 shadow-sm" id="email" name="email" value="{{ email }}" required autocomplete="email">
+            <input type="email" class="w-full border border-slate-300 px-3 py-2" id="email" name="email" value="{{ email }}" required autocomplete="email">
           </div>
           <div class="mb-4">
             <label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label>
-            <input type="password" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 shadow-sm" id="password" name="password" required autocomplete="current-password">
+            <input type="password" class="w-full border border-slate-300 px-3 py-2" id="password" name="password" required autocomplete="current-password">
           </div>
-          <button type="submit" class="w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-brand-500">Se connecter</button>
+          <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">Se connecter</button>
         </form>
         <p class="mt-4 text-center text-sm">Pas de compte ? <a class="text-blue-600 hover:underline" href="{{ url_for('register') }}">Inscription</a></p>
-  </div>
 </div>
 {% endblock %}

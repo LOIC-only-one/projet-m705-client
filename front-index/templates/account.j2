@@ -2,7 +2,7 @@
 {% block title %}Mon compte · Vidéothèque{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-xl space-y-6">
-  <section class="rounded-lg bg-white p-6 shadow">
+  <section class="rounded-md border border-slate-300 bg-white p-6">
     <div class="mb-5 flex items-center justify-between">
       <h1 class="text-xl font-semibold">Mon compte</h1>
       <button type="button" class="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50" id="enable-edit-btn" onclick="toggleEditMode()">Modifier le profil</button>
@@ -30,7 +30,7 @@
     </form>
   </section>
 
-  <section class="rounded-lg bg-white p-6 shadow">
+  <section class="rounded-md border border-slate-300 bg-white p-6">
     <h2 class="mb-4 text-lg font-semibold">Changer mon mot de passe</h2>
     <form method="post" action="{{ url_for('changer_mot_de_passe') }}" class="space-y-4">
       <div><label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label><input type="password" id="password" name="password" class="w-full rounded border border-slate-300 px-3 py-2" required autocomplete="current-password"></div>
@@ -40,14 +40,14 @@
     </form>
   </section>
 
-  <section class="rounded-lg border border-red-200 bg-red-50 p-6">
+  <section class="rounded-md border border-red-300 bg-red-50 p-6">
     <h2 class="mb-2 text-lg font-semibold text-red-900">Supprimer mon compte</h2>
     <p class="mb-4 text-sm text-red-800">Cette action est définitive et supprimera aussi votre vidéothèque et vos emprunts.</p>
     <button type="button" class="rounded border border-red-300 px-4 py-2 text-red-700 hover:bg-red-100" onclick="document.getElementById('delete-account-dialog').showModal()">Supprimer mon compte</button>
   </section>
 </div>
 
-<dialog id="delete-account-dialog" class="rounded-lg p-0 shadow-xl backdrop:bg-slate-950/50">
+<dialog id="delete-account-dialog" class="rounded-md border border-slate-300 p-0 shadow-lg backdrop:bg-slate-950/50">
   <form method="post" action="{{ url_for('supprimer_compte') }}" class="w-80 space-y-4 p-6">
     <h2 class="text-lg font-semibold">Êtes-vous sûr ?</h2>
     <p class="text-sm text-slate-600">Confirmez votre identité avec votre mot de passe pour supprimer définitivement votre compte.</p>

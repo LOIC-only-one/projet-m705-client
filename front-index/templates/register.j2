@@ -1,45 +1,32 @@
 {% extends "base.j2" %}
 {% block title %}Inscription · Vidéothèque{% endblock %}
 {% block content %}
-<div class="mx-auto grid max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl md:grid-cols-2">
-  <div class="hidden bg-gradient-to-br from-brand-700 via-indigo-900 to-slate-950 p-10 text-white md:flex md:flex-col md:justify-between">
-    <div>
-      <span class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-200">Rejoignez-nous</span>
-      <h1 class="mt-4 text-3xl font-bold">Votre collection mérite d'être partagée.</h1>
-      <p class="mt-4 leading-7 text-indigo-100/80">Créez votre compte et transformez votre vidéothèque personnelle en découvertes.</p>
-    </div>
-    <div class="grid grid-cols-3 gap-3 text-center text-xs">
-      <div class="rounded-lg bg-white/10 p-3"><strong class="block text-lg">01</strong>Déclarer</div>
-      <div class="rounded-lg bg-white/10 p-3"><strong class="block text-lg">02</strong>Partager</div>
-      <div class="rounded-lg bg-white/10 p-3"><strong class="block text-lg">03</strong>Emprunter</div>
-    </div>
-  </div>
-  <div class="p-6 sm:p-10">
+<div class="mx-auto max-w-md rounded-md border border-slate-300 bg-white p-6 sm:p-10">
+  <div>
         <h1 class="mb-1 text-2xl font-bold">Créer un compte</h1>
         <p class="mb-6 text-sm text-slate-500">Commencez votre aventure cinéphile.</p>
         <form method="post">
           <div class="mb-4">
             <label for="username" class="mb-1 block text-sm font-medium">Nom d'utilisateur</label>
-            <input class="w-full rounded-lg border border-slate-300 px-3 py-2.5 shadow-sm" id="username" name="username" value="{{ form.username }}" required
+            <input class="w-full border border-slate-300 px-3 py-2" id="username" name="username" value="{{ form.username }}" required
                    pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="username">
             <div class="mt-1 text-sm text-slate-500">3 à 50 caractères : lettres, chiffres, _ . -</div>
           </div>
           <div class="mb-4">
             <label for="email" class="mb-1 block text-sm font-medium">Email</label>
-            <input type="email" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 shadow-sm" id="email" name="email" value="{{ form.email }}" required maxlength="255" autocomplete="email">
+            <input type="email" class="w-full border border-slate-300 px-3 py-2" id="email" name="email" value="{{ form.email }}" required maxlength="255" autocomplete="email">
           </div>
           <div class="mb-4">
             <label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label>
-            <input type="password" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 shadow-sm" id="password" name="password" required minlength="12" autocomplete="new-password">
+            <input type="password" class="w-full border border-slate-300 px-3 py-2" id="password" name="password" required minlength="12" autocomplete="new-password">
             <div class="mt-1 text-sm text-slate-500">12 caractères minimum.</div>
           </div>
           <div class="mb-4">
             <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
-            <input type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 shadow-sm" id="birthdate" name="birthdate" value="{{ form.birthdate }}" required>
+            <input type="date" class="w-full border border-slate-300 px-3 py-2" id="birthdate" name="birthdate" value="{{ form.birthdate }}" required>
           </div>
-          <button type="submit" class="w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-brand-500">Créer le compte</button>
+          <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">Créer le compte</button>
         </form>
         <p class="mt-4 text-center text-sm">Déjà inscrit ? <a class="text-blue-600 hover:underline" href="{{ url_for('login') }}">Connexion</a></p>
-  </div>
 </div>
 {% endblock %}

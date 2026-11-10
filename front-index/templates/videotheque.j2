@@ -13,7 +13,7 @@
   <section>
     <h2 class="mb-3 text-lg font-semibold">Mes emprunts en cours <span class="text-sm font-normal text-slate-500">{{ en_cours | length }}/5</span></h2>
     {% if en_cours %}
-    <ul class="overflow-hidden rounded-lg bg-white shadow">
+    <ul class="overflow-hidden rounded-md border border-slate-300 bg-white">
       {% for e in en_cours %}
       <li class="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4 last:border-0 {{ 'bg-red-50' if e.en_retard }}">
         {{ ligne_film(e.film) }}
@@ -55,16 +55,16 @@
   <section>
     <h2 class="mb-3 text-lg font-semibold">Mes films <span class="text-sm font-normal text-slate-500">{{ exemplaires | length }}</span></h2>
     {% if exemplaires %}
-    <ul class="overflow-hidden rounded-lg bg-white shadow">
+    <ul class="overflow-hidden rounded-md border border-slate-300 bg-white">
       {% for ex in exemplaires %}
       <li class="flex items-center gap-3 border-b border-slate-200 p-4 last:border-0">
         {{ ligne_film(ex.film) }}
         {% if ex.prete_jusquau %}
-        <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ 'bg-red-100 text-red-800' if ex.en_retard else 'bg-yellow-100 text-yellow-800' }}">
+        <span class="text-xs font-medium {{ 'text-red-700' if ex.en_retard else 'text-yellow-700' }}">
           {{ 'Retour en retard' if ex.en_retard else 'Prêté' }} · {{ ex.prete_jusquau }}
         </span>
         {% else %}
-        <span class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">Chez moi</span>
+        <span class="text-xs font-medium text-green-700">Chez moi</span>
         <form method="post" action="{{ url_for('supprimer_exemplaire', id=ex.id) }}">
           <button class="rounded border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">Retirer</button>
         </form>
