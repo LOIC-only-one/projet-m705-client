@@ -3,7 +3,7 @@
 {% macro ligne_film(film) %}
   {% if film.affiche %}<img src="{{ film.affiche }}" class="miniature rounded" alt="" loading="lazy">{% endif %}
   <div class="flex-grow-1">
-    <div class="fw-semibold">{{ film.titre }}</div>
+    <a class="fw-semibold link-body-emphasis text-decoration-none" href="{{ url_for('film', film_id=film.id) }}">{{ film.titre }}</a>
     <div class="text-muted small">{{ film.annee }}</div>
   </div>
 {% endmacro %}
@@ -11,33 +11,58 @@
 <h1 class="h3 mb-4">Ma vidéothèque</h1>
 <div class="row g-4">
   <section class="col-lg-6">
-    <h2 class="h5">Mes emprunts en cours</h2>
-    {% if emprunts %}
+    <h2 class="h5">Mes emprunts en cours <span class="text-muted fs-6">{{ en_cours | length }}/5</span></h2>
+    {% if en_cours %}
     <ul class="list-group shadow-sm">
-      {% for e in emprunts %}
-      <li class="list-group-item d-flex align-items-center gap-3">
+      {% for e in en_cours %}
+      <li class="list-group-item d-flex flex-wrap align-items-center gap-3 {{ 'list-group-item-danger' if e.en_retard }}">
         {{ ligne_film(e.film) }}
-        <span class="small text-muted text-end">À rendre avant le<br>{{ e.date_retour_prevue }}</span>
-        <form method="post" action="{{ url_for('rendre', id=e.id) }}">
-          <button class="btn btn-outline-primary btn-sm">Rendre</button>
-        </form>
+        <span class="small text-end {{ 'text-danger fw-semibold' if e.en_retard else 'text-muted' }}">
+          {% if e.en_retard %}En retard depuis le{% else %}À rendre avant le{% endif %}<br>{{ e.date_retour_prevue }}
+        </span>
+        <div class="d-flex gap-2">
+          {% if not e.prolonge and not e.en_retard %}
+          <form method="post" action="{{ url_for('prolonger', id=e.id) }}">
+            <button class="btn btn-outline-secondary btn-sm" title="+7 jours, une seule fois">Prolonger</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('rendre', id=e.id) }}">
+            <button class="btn btn-primary btn-sm">Rendre</button>
+          </form>
+        </div>
       </li>
       {% endfor %}
     </ul>
     {% else %}
-    <p class="text-muted">Aucun emprunt. <a href="{{ url_for('index') }}">Parcourir le catalogue</a></p>
+    <p class="text-muted">Aucun emprunt. <a href="{{ url_for('index', dispo=1) }}">Voir les films disponibles</a></p>
+    {% endif %}
+
+    {% if historique %}
+    <details class="mt-4">
+      <summary class="h6">Historique ({{ historique | length }})</summary>
+      <ul class="list-group list-group-flush mt-2">
+        {% for e in historique %}
+        <li class="list-group-item d-flex align-items-center gap-3 bg-transparent">
+          {{ ligne_film(e.film) }}
+          <span class="small text-muted text-end">Du {{ e.date_emprunt }}<br>au {{ e.date_retour }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
     {% endif %}
   </section>
 
   <section class="col-lg-6">
-    <h2 class="h5">Mes films</h2>
+    <h2 class="h5">Mes films <span class="text-muted fs-6">{{ exemplaires | length }}</span></h2>
     {% if exemplaires %}
     <ul class="list-group shadow-sm">
       {% for ex in exemplaires %}
       <li class="list-group-item d-flex align-items-center gap-3">
         {{ ligne_film(ex.film) }}
         {% if ex.prete_jusquau %}
-        <span class="badge text-bg-warning">Prêté jusqu'au {{ ex.prete_jusquau }}</span>
+        <span class="badge {{ 'text-bg-danger' if ex.en_retard else 'text-bg-warning' }}">
+          {{ 'Retour en retard' if ex.en_retard else 'Prêté' }} · {{ ex.prete_jusquau }}
+        </span>
         {% else %}
         <span class="badge text-bg-success">Chez moi</span>
         <form method="post" action="{{ url_for('supprimer_exemplaire', id=ex.id) }}">

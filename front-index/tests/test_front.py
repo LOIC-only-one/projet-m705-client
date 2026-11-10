@@ -159,3 +159,43 @@ def test_videotheque(client):
         reponse = client.get("/videotheque")
     assert "The Dark Knight" in reponse.text
     assert "/exemplaires/e1/supprimer" in reponse.text
+
+
+def test_jeton_expire_renouvele(client):
+    # plus de cookie access_token (expiré) mais un refresh_token : le front renouvelle la session
+    client.set_cookie("refresh_token", "ancien")
+    nouveaux = fausse_reponse_api(200, {"access_token": JETON, "expires_in": 900}, {"refresh_token": "nouveau"})
+    with patch("app.requests.post", return_value=nouveaux) as faux_post, \
+         patch("app.requests.get", return_value=fausse_reponse_api(200, {"films": [], "genres": []})) as faux_get:
+        client.get("/", base_url="https://localhost")
+    assert faux_post.call_args.args[0].endswith("/api/auth/refresh")
+    assert faux_get.call_args.kwargs["headers"]["Authorization"] == "Bearer " + JETON
+    assert client.get_cookie("refresh_token").value == "nouveau"
+    assert client.get_cookie("access_token").value == JETON
+
+
+def test_session_revoquee_deconnecte(client):
+    client.set_cookie("refresh_token", "revoque")
+    with patch("app.requests.post", return_value=fausse_reponse_api(401, {"error": {"code": "JETON_REVOQUE", "message": "x"}})):
+        page = client.get("/")
+    assert "Connexion" in page.text
+    assert client.get_cookie("refresh_token") is None
+
+
+def test_fiche_film(client):
+    client.set_cookie("access_token", JETON)
+    film = {"id": 155, "titre": "The Dark Knight", "annee": 2008, "affiche": None, "synopsis": "Batman.",
+            "genres": ["Action"], "disponibles": 1, "possede": False, "emprunte": False}
+    with patch("app.requests.get", return_value=fausse_reponse_api(200, film)) as faux_get:
+        page = client.get("/films/155")
+    assert faux_get.call_args.args[0].endswith("/api/films/155")
+    assert "Batman." in page.text and "Emprunter" in page.text
+
+
+def test_retour_page_precedente_locale_seulement(client):
+    client.set_cookie("access_token", JETON)
+    with patch("app.requests.post", return_value=fausse_reponse_api(201, {})):
+        local = client.post("/emprunts", data={"film_id": "1"}, headers={"Referer": "http://localhost/?genre=Action"})
+        externe = client.post("/emprunts", data={"film_id": "1"}, headers={"Referer": "https://evil.example/"})
+    assert local.location == "/?genre=Action"
+    assert externe.location == "/"

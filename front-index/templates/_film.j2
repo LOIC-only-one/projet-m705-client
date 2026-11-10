@@ -1,0 +1,25 @@
+{# Statut et actions d'un film, partagés entre le catalogue et la fiche film. #}
+{% macro statut(film) %}
+  {% if film.possede %}<span class="badge text-bg-primary">Dans ma vidéothèque</span>
+  {% elif film.emprunte %}<span class="badge text-bg-info">Emprunté</span>
+  {% elif film.disponibles %}<span class="badge text-bg-success">{{ film.disponibles }} disponible{{ 's' if film.disponibles > 1 }}</span>
+  {% else %}<span class="badge text-bg-secondary">Indisponible</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro actions(film, depuis="catalogue", taille="btn-sm") %}
+  {% if film.emprunte %}
+  <a class="btn btn-outline-info {{ taille }}" href="{{ url_for('videotheque') }}">Voir mes emprunts</a>
+  {% elif not film.possede %}
+    {% if film.disponibles %}
+    <form method="post" action="{{ url_for('emprunter') }}" class="d-grid">
+      <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
+      <button class="btn btn-primary {{ taille }}">Emprunter</button>
+    </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('ajouter_exemplaire') }}" class="d-grid">
+      <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
+      <button class="btn btn-outline-secondary {{ taille }}">J'ai ce film</button>
+    </form>
+  {% endif %}
+{% endmacro %}
