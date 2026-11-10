@@ -122,3 +122,40 @@ def test_account_patch(client):
         reponse = client.post("/account", data={"username": "bob2", "email": "", "photo_profil": ""})
     assert reponse.status_code == 302
     assert faux_patch.call_args.kwargs["json"] == {"username": "bob2"}
+
+
+def test_recherche(client):
+    client.set_cookie("access_token", JETON)
+    client.set_cookie("refresh_token", "refresh")
+    with patch("app.requests.get", return_value=fausse_reponse_api(200, {"films": []})) as faux_get:
+        reponse = client.get("/?q=dark knight")
+    assert faux_get.call_args.args[0].endswith("/api/films?q=dark+knight")
+    assert "Aucun film ne correspond" in reponse.text
+
+
+def test_emprunter(client):
+    client.set_cookie("access_token", JETON)
+    with patch("app.requests.post", return_value=fausse_reponse_api(201, {})) as faux_post:
+        reponse = client.post("/emprunts", data={"film_id": "155"})
+    assert reponse.status_code == 302
+    assert faux_post.call_args.kwargs["json"] == {"film_id": 155}
+
+
+def test_emprunter_indisponible(client):
+    client.set_cookie("access_token", JETON)
+    erreur = {"code": "AUCUN_EXEMPLAIRE_DISPONIBLE", "message": "Aucun exemplaire disponible."}
+    with patch("app.requests.post", return_value=fausse_reponse_api(409, {"error": erreur})), \
+         patch("app.requests.get", return_value=fausse_reponse_api(200, {"films": []})):
+        reponse = client.post("/emprunts", data={"film_id": "155"})
+    assert "Aucun exemplaire disponible." in reponse.text
+
+
+def test_videotheque(client):
+    client.set_cookie("access_token", JETON)
+    film = {"id": 155, "titre": "The Dark Knight", "annee": 2008, "affiche": None}
+    reponses = [fausse_reponse_api(200, {"exemplaires": [{"id": "e1", "film": film, "prete_jusquau": None}]}),
+                fausse_reponse_api(200, {"emprunts": []})]
+    with patch("app.requests.get", side_effect=reponses):
+        reponse = client.get("/videotheque")
+    assert "The Dark Knight" in reponse.text
+    assert "/exemplaires/e1/supprimer" in reponse.text

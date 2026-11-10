@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from urllib.parse import quote, urlencode
 
 import requests
 from flask import Flask, redirect, render_template, request, url_for
@@ -51,18 +52,66 @@ def health():
     return {"status": "ok"}
 
 
+def lire_catalogue(route, jeton):
+    """GET sur api-catalogue : (données, None) ou ({}, message d'erreur)."""
+    reponse_api = appel_api(API_CATALOG, route, methode="GET", jeton=jeton)
+    if reponse_api is None or not reponse_api.ok:
+        return {}, erreur_api(reponse_api)[0]
+    return reponse_api.json(), None
+
+
+def action_catalogue(route, page, donnees=None, methode="POST"):
+    """POST/DELETE sur api-catalogue puis redirection vers la page ; en cas d'erreur, la page s'affiche avec le message."""
+    jeton = request.cookies.get("access_token")
+    if not jeton:
+        return redirect(url_for("login"))
+    reponse_api = appel_api(API_CATALOG, route, donnees, methode=methode, jeton=jeton)
+    if reponse_api is None or not reponse_api.ok:
+        return page(erreur=erreur_api(reponse_api)[0])
+    return redirect(url_for(page.__name__))
+
+
 @app.get("/")
-def index():
+def index(erreur=None):
+    q = request.args.get("q", "").strip()
     films = []
-    erreur = None
     jeton = request.cookies.get("access_token")
     if jeton:
-        reponse_api = appel_api(API_CATALOG, "/api/films", methode="GET", jeton=jeton)
-        if reponse_api is None or not reponse_api.ok:
-            erreur, _ = erreur_api(reponse_api)
-        else:
-            films = reponse_api.json().get("films", [])
-    return render_template("index.j2", films=films, erreur_films=erreur)
+        donnees, erreur_films = lire_catalogue("/api/films" + ("?" + urlencode({"q": q}) if q else ""), jeton)
+        films = donnees.get("films", [])
+        erreur = erreur or erreur_films
+    return render_template("index.j2", films=films, q=q, erreur=erreur)
+
+
+@app.get("/videotheque")
+def videotheque(erreur=None):
+    jeton = request.cookies.get("access_token")
+    if not jeton:
+        return redirect(url_for("login"))
+    exemplaires, erreur_ex = lire_catalogue("/api/exemplaires", jeton)
+    emprunts, erreur_emp = lire_catalogue("/api/emprunts", jeton)
+    return render_template("videotheque.j2", exemplaires=exemplaires.get("exemplaires", []),
+                           emprunts=emprunts.get("emprunts", []), erreur=erreur or erreur_ex or erreur_emp)
+
+
+@app.post("/exemplaires")
+def ajouter_exemplaire():
+    return action_catalogue("/api/exemplaires", index, {"film_id": request.form.get("film_id", type=int)})
+
+
+@app.post("/exemplaires/<id>/supprimer")
+def supprimer_exemplaire(id):
+    return action_catalogue(f"/api/exemplaires/{quote(id)}", videotheque, methode="DELETE")
+
+
+@app.post("/emprunts")
+def emprunter():
+    return action_catalogue("/api/emprunts", index, {"film_id": request.form.get("film_id", type=int)})
+
+
+@app.post("/emprunts/<id>/retour")
+def rendre(id):
+    return action_catalogue(f"/api/emprunts/{quote(id)}/retour", videotheque)
 
 
 @app.route("/login", methods=["GET", "POST"])

@@ -1,0 +1,55 @@
+{% extends "base.j2" %}
+{% block title %}Ma vidéothèque · Vidéothèque{% endblock %}
+{% macro ligne_film(film) %}
+  {% if film.affiche %}<img src="{{ film.affiche }}" class="miniature rounded" alt="" loading="lazy">{% endif %}
+  <div class="flex-grow-1">
+    <div class="fw-semibold">{{ film.titre }}</div>
+    <div class="text-muted small">{{ film.annee }}</div>
+  </div>
+{% endmacro %}
+{% block content %}
+<h1 class="h3 mb-4">Ma vidéothèque</h1>
+<div class="row g-4">
+  <section class="col-lg-6">
+    <h2 class="h5">Mes emprunts en cours</h2>
+    {% if emprunts %}
+    <ul class="list-group shadow-sm">
+      {% for e in emprunts %}
+      <li class="list-group-item d-flex align-items-center gap-3">
+        {{ ligne_film(e.film) }}
+        <span class="small text-muted text-end">À rendre avant le<br>{{ e.date_retour_prevue }}</span>
+        <form method="post" action="{{ url_for('rendre', id=e.id) }}">
+          <button class="btn btn-outline-primary btn-sm">Rendre</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">Aucun emprunt. <a href="{{ url_for('index') }}">Parcourir le catalogue</a></p>
+    {% endif %}
+  </section>
+
+  <section class="col-lg-6">
+    <h2 class="h5">Mes films</h2>
+    {% if exemplaires %}
+    <ul class="list-group shadow-sm">
+      {% for ex in exemplaires %}
+      <li class="list-group-item d-flex align-items-center gap-3">
+        {{ ligne_film(ex.film) }}
+        {% if ex.prete_jusquau %}
+        <span class="badge text-bg-warning">Prêté jusqu'au {{ ex.prete_jusquau }}</span>
+        {% else %}
+        <span class="badge text-bg-success">Chez moi</span>
+        <form method="post" action="{{ url_for('supprimer_exemplaire', id=ex.id) }}">
+          <button class="btn btn-outline-danger btn-sm">Retirer</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">Vous n'avez déclaré aucun film. Cliquez sur « J'ai ce film » dans le <a href="{{ url_for('index') }}">catalogue</a>.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
