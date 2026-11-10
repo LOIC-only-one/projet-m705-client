@@ -1,0 +1,73 @@
+{% extends "base.j2" %}
+{% block title %}Administration · Vidéothèque{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Administration
+  <span class="text-muted fs-6">{{ ids | length }} utilisateur{{ 's' if ids | length > 1 }}</span>
+</h1>
+
+<div class="row g-4">
+  <div class="col-md-5 col-lg-4">
+    <div class="list-group shadow-sm">
+      {% for id in ids %}
+      <a class="list-group-item list-group-item-action font-monospace small {{ 'active' if id == selection }}"
+         href="{{ url_for('admin', user=id) }}" {% if id == selection %}aria-current="true"{% endif %}>{{ id }}</a>
+      {% else %}
+      <div class="list-group-item text-muted">Aucun utilisateur.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-md-7 col-lg-8">
+    {% if selection %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-1">Utilisateur</h2>
+        <p class="font-monospace small text-muted mb-3">
+          {{ selection }}{% if form.get('created_at') %} · inscrit le {{ form.get('created_at')[:10] }}{% endif %}
+        </p>
+        {% if modifie %}<div class="alert alert-success">Utilisateur mis à jour.</div>{% endif %}
+
+        <form method="post" action="{{ url_for('admin_modifier_utilisateur', id=selection) }}">
+          <div class="mb-3">
+            <label for="username" class="form-label">Nom d'utilisateur</label>
+            <input class="form-control" id="username" name="username" value="{{ form.get('username', '') }}" required
+                   pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="off">
+            <div class="form-text">3 à 50 caractères : lettres, chiffres, _ . -</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="off">
+          </div>
+
+          <div class="mb-3">
+            <label for="birthdate" class="form-label">Date de naissance</label>
+            <input type="date" class="form-control" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="photo_profil" class="form-label">Photo de profil (URL)</label>
+            <input type="text" class="form-control" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}">
+            <div class="form-text">Laissez vide pour supprimer la photo.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="role" class="form-label">Rôle</label>
+            <select class="form-select" id="role" name="role">
+              {% for r in ('user', 'admin') %}
+              <option value="{{ r }}" {{ 'selected' if form.get('role') == r }}>{{ r }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Le nouveau rôle s'applique à la prochaine connexion de l'utilisateur (jeton d'accès de 15 min).</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Enregistrer les modifications</button>
+        </form>
+      </div>
+    </div>
+    {% elif ids %}
+    <p class="text-muted">Sélectionnez un utilisateur dans la liste pour afficher et modifier son compte.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

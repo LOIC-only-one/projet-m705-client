@@ -1,10 +1,11 @@
 import base64
 import json
 import os
+import re
 from urllib.parse import quote, urlencode, urlsplit
 
 import requests
-from flask import Flask, g, redirect, render_template, request, url_for
+from flask import Flask, abort, g, redirect, render_template, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
@@ -82,7 +83,9 @@ def jeton_acces():
 
 @app.context_processor
 def utilisateur_connecte():
-    return {"connecte": "refresh_token" in request.cookies and g.get("jetons") is not False}
+    # "admin" sert seulement à afficher le lien du menu : l'API vérifie le jeton et refuse (403) les non-admins
+    return {"connecte": "refresh_token" in request.cookies and g.get("jetons") is not False,
+            "admin": charge_jeton(jeton_acces() or "").get("role") == "admin"}
 
 
 @app.get("/health")
@@ -234,13 +237,17 @@ def logout():
     return redirection
 
 
-def id_utilisateur(jeton):
-    # le front n'a pas le secret : on lit juste le "sub", c'est api-user qui vérifie la signature
+def charge_jeton(jeton):
+    # le front n'a pas la clé publique : on lit juste le contenu, c'est l'API qui vérifie la signature
     try:
         charge = jeton.split(".")[1]
-        return json.loads(base64.urlsafe_b64decode(charge + "=" * (-len(charge) % 4)))["sub"]
+        return json.loads(base64.urlsafe_b64decode(charge + "=" * (-len(charge) % 4)))
     except Exception:
-        return None
+        return {}
+
+
+def id_utilisateur(jeton):
+    return charge_jeton(jeton).get("sub")
 
 
 @app.route("/account", methods=["GET", "POST"])
@@ -266,3 +273,64 @@ def account():
         return render_template("account.j2", erreur=message, form=request.form), code_http
 
     return redirect(url_for("account"))
+
+
+def id_valide(id):
+    """Un id MongoDB (ObjectId) : 24 caractères hexadécimaux."""
+    return re.fullmatch(r"[0-9a-f]{24}", id) is not None
+
+
+def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifie=False):
+    """Dashboard : liste des ids (GET /api/users) et, si un id est choisi, son formulaire (GET /api/users/<id>)."""
+    jeton = jeton_acces()
+    if not jeton:
+        return redirect(url_for("login"))
+
+    reponse_api = appel_api(API_USER, "/api/users", methode="GET", jeton=jeton)
+    if reponse_api is not None and reponse_api.status_code == 401:
+        return redirect(url_for("login"))
+    if reponse_api is None or not reponse_api.ok:  # 403 pour un non-admin
+        message, code_http = erreur_api(reponse_api)
+        return render_template("admin.j2", erreur=message, ids=[], selection=None, form={}), code_http
+    ids = reponse_api.json().get("ids", [])
+
+    if selection and form is None:
+        reponse_api = appel_api(API_USER, f"/api/users/{selection}", methode="GET", jeton=jeton)
+        if reponse_api is not None and reponse_api.status_code == 401:
+            return redirect(url_for("login"))
+        if reponse_api is None or not reponse_api.ok:
+            erreur, code_http = erreur_api(reponse_api)
+            form = {}
+        else:
+            form = reponse_api.json()
+    return render_template("admin.j2", ids=ids, selection=selection, form=form or {}, erreur=erreur,
+                           modifie=modifie), code_http
+
+
+@app.get("/admin")
+def admin():
+    selection = request.args.get("user", "")
+    if selection and not id_valide(selection):
+        abort(404)
+    return afficher_admin(selection or None, modifie="modifie" in request.args)
+
+
+@app.post("/admin/users/<id>")
+def admin_modifier_utilisateur(id):
+    if not id_valide(id):
+        abort(404)
+    jeton = jeton_acces()
+    if not jeton:
+        return redirect(url_for("login"))
+
+    # champs vides non envoyés (l'API refuse une date vide) ; une photo vide, elle, efface la photo
+    modif_utilisateur = {c: request.form[c] for c in ("username", "email", "birthdate", "role") if request.form.get(c)}
+    modif_utilisateur["photo_profil"] = request.form.get("photo_profil") or None
+    reponse_api = appel_api(API_USER, f"/api/users/{id}", modif_utilisateur, methode="PATCH", jeton=jeton)
+    if reponse_api is not None and reponse_api.status_code == 401:
+        return redirect(url_for("login"))
+    if reponse_api is None or not reponse_api.ok:
+        message, code_http = erreur_api(reponse_api)
+        return afficher_admin(id, erreur=message, form=request.form, code_http=code_http)
+
+    return redirect(url_for("admin", user=id, modifie=1))
