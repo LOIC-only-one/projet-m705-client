@@ -86,14 +86,20 @@ def test_admin_clic_sur_un_user_affiche_son_formulaire(client):
     assert f'action="/admin/users/{ID}"' in page.text
 
 
-def test_admin_non_admin_refuse_par_l_api_403(client):
+def test_admin_user_simple_recoit_404_sans_appeler_l_api(client):
     connecte(client, role="user")
-    erreur = {"code": "ACCES_REFUSE", "message": "Accès refusé."}
-    with patch("app.requests.get", return_value=fausse_reponse_api(403, {"error": erreur})):
-        page = client.get("/admin")
+    with patch("app.requests.get") as faux_get, patch("app.requests.patch") as faux_patch, \
+            patch("app.requests.delete") as faux_delete:
+        assert client.get("/admin").status_code == 404
+        assert client.get(f"/admin?user={ID}").status_code == 404
+        assert client.post(f"/admin/users/{ID}", data={"role": "admin"}).status_code == 404
+        page = client.post(f"/admin/users/{ID}/supprimer")
 
-    assert page.status_code == 403
-    assert "Accès refusé." in page.text
+    assert page.status_code == 404
+    assert "Accès refusé" not in page.text
+    faux_get.assert_not_called()
+    faux_patch.assert_not_called()
+    faux_delete.assert_not_called()
 
 
 def test_admin_id_mal_forme_404(client):
@@ -179,3 +185,83 @@ def test_variable_admin_pour_le_menu(role, attendu):
         contexte = {}
         app.update_template_context(contexte)
     assert contexte["admin"] is attendu
+
+
+def test_admin_affiche_le_bouton_supprimer_pour_un_autre_user(client):
+    connecte(client)  # l'admin est AUTRE
+    reponses = [fausse_reponse_api(200, LISTE), fausse_reponse_api(200, COMPTE)]
+    with patch("app.requests.get", side_effect=reponses):
+        page = client.get(f"/admin?user={ID}")
+
+    assert f'formaction="/admin/users/{ID}/supprimer"' in page.text
+    assert "Supprimer l&#39;utilisateur" in page.text or "Supprimer l'utilisateur" in page.text
+    assert "Enregistrer les modifications" in page.text
+
+
+def test_admin_pas_de_bouton_supprimer_sur_son_propre_compte(client):
+    connecte(client)
+    reponses = [fausse_reponse_api(200, LISTE), fausse_reponse_api(200, {**COMPTE, "id": AUTRE})]
+    with patch("app.requests.get", side_effect=reponses):
+        page = client.get(f"/admin?user={AUTRE}")
+
+    assert page.status_code == 200
+    assert "/supprimer" not in page.text
+    assert "Enregistrer les modifications" in page.text
+
+
+def test_admin_supprimer_appelle_delete_puis_confirme(client):
+    connecte(client)
+    with patch("app.requests.delete", return_value=fausse_reponse_api(204)) as faux_delete:
+        page = client.post(f"/admin/users/{ID}/supprimer")
+
+    assert page.status_code == 302
+    assert page.headers["Location"].endswith("/admin?supprime=1")
+    assert faux_delete.call_args.args == (f"http://api-user:8000/api/users/{ID}",)
+    assert faux_delete.call_args.kwargs["headers"]["Authorization"] == "Bearer " + faux_jeton()
+
+    liste = fausse_reponse_api(200, {"users": [LISTE["users"][1]]})
+    with patch("app.requests.get", return_value=liste):
+        suite = client.get("/admin?supprime=1")
+    assert "Utilisateur supprimé." in suite.text
+
+
+def test_admin_supprimer_erreur_de_l_api_affichee(client):
+    connecte(client)
+    erreur = {"code": "UTILISATEUR_INTROUVABLE", "message": "Utilisateur introuvable."}
+    with patch("app.requests.delete", return_value=fausse_reponse_api(404, {"error": erreur})), \
+            patch("app.requests.get", side_effect=[fausse_reponse_api(200, LISTE),
+                                                    fausse_reponse_api(404, {"error": erreur})]):
+        page = client.post(f"/admin/users/{ID}/supprimer")
+
+    assert page.status_code == 404
+    assert "Utilisateur introuvable." in page.text
+
+
+def test_admin_ne_peut_pas_se_supprimer_lui_meme(client):
+    connecte(client)  # l'admin est AUTRE
+    reponses = [fausse_reponse_api(200, LISTE), fausse_reponse_api(200, {**COMPTE, "id": AUTRE})]
+    with patch("app.requests.delete") as faux_delete, patch("app.requests.get", side_effect=reponses):
+        page = client.post(f"/admin/users/{AUTRE}/supprimer")
+
+    assert page.status_code == 403
+    assert "propre compte" in page.text
+    faux_delete.assert_not_called()
+
+
+def test_admin_supprimer_sans_jeton_login_et_id_invalide_404(client):
+    with patch("app.requests.delete") as faux_delete:
+        page = client.post(f"/admin/users/{ID}/supprimer")
+        assert page.status_code == 302 and page.headers["Location"].endswith("/login")
+        connecte(client)
+        assert client.post("/admin/users/pas-un-id/supprimer").status_code == 404
+    faux_delete.assert_not_called()
+
+
+def test_admin_supprimer_jeton_refuse_401_redirige_vers_login(client):
+    connecte(client)
+    erreur = {"code": "JETON_INVALIDE", "message": "Jeton invalide."}
+    with patch("app.requests.delete", return_value=fausse_reponse_api(401, {"error": erreur})):
+        page = client.post(f"/admin/users/{ID}/supprimer")
+
+    assert page.status_code == 302
+    assert page.headers["Location"].endswith("/login")

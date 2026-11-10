@@ -1,4 +1,5 @@
 import base64
+import functools
 import json
 import os
 import re
@@ -280,16 +281,30 @@ def id_valide(id):
     return re.fullmatch(r"[0-9a-f]{24}", id) is not None
 
 
-def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifie=False):
+def admin_requis(vue):
+    """Réserve une page de l'administration aux admins : sans jeton, login ; avec un jeton de simple user, 404.
+
+    Le rôle est lu dans le jeton sans vérifier la signature (le front n'a pas la clé) : ce n'est qu'un filtre
+    d'affichage, api-user vérifie le jeton et refuse (403) tout appel d'un non-admin.
+    """
+    @functools.wraps(vue)
+    def enveloppe(*args, **kwargs):
+        jeton = jeton_acces()
+        if not jeton:
+            return redirect(url_for("login"))
+        if charge_jeton(jeton).get("role") != "admin":
+            abort(404)  # la page n'existe pas pour un non-admin
+        return vue(*args, **kwargs)
+    return enveloppe
+
+
+def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifie=False, supprime=False):
     """Dashboard : liste des utilisateurs (GET /api/users) et, si un id est choisi, son formulaire (GET /api/users/<id>)."""
     jeton = jeton_acces()
-    if not jeton:
-        return redirect(url_for("login"))
-
     reponse_api = appel_api(API_USER, "/api/users", methode="GET", jeton=jeton)
     if reponse_api is not None and reponse_api.status_code == 401:
         return redirect(url_for("login"))
-    if reponse_api is None or not reponse_api.ok:  # 403 pour un non-admin
+    if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)
         return render_template("admin.j2", erreur=message, utilisateurs=[], selection=None, form={}), code_http
     utilisateurs = reponse_api.json().get("users", [])
@@ -304,24 +319,24 @@ def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifi
         else:
             form = reponse_api.json()
     return render_template("admin.j2", utilisateurs=utilisateurs, selection=selection, form=form or {}, erreur=erreur,
-                           modifie=modifie), code_http
+                           modifie=modifie, supprime=supprime, moi=id_utilisateur(jeton)), code_http
 
 
 @app.get("/admin")
+@admin_requis
 def admin():
     selection = request.args.get("user", "")
     if selection and not id_valide(selection):
         abort(404)
-    return afficher_admin(selection or None, modifie="modifie" in request.args)
+    return afficher_admin(selection or None, modifie="modifie" in request.args, supprime="supprime" in request.args)
 
 
 @app.post("/admin/users/<id>")
+@admin_requis
 def admin_modifier_utilisateur(id):
     if not id_valide(id):
         abort(404)
     jeton = jeton_acces()
-    if not jeton:
-        return redirect(url_for("login"))
 
     # champs vides non envoyés (l'API refuse une date vide) ; une photo vide, elle, efface la photo
     modif_utilisateur = {c: request.form[c] for c in ("username", "email", "birthdate", "role") if request.form.get(c)}
@@ -334,3 +349,23 @@ def admin_modifier_utilisateur(id):
         return afficher_admin(id, erreur=message, form=request.form, code_http=code_http)
 
     return redirect(url_for("admin", user=id, modifie=1))
+
+
+@app.post("/admin/users/<id>/supprimer")
+@admin_requis
+def admin_supprimer_utilisateur(id):
+    if not id_valide(id):
+        abort(404)
+    jeton = jeton_acces()
+    if id == id_utilisateur(jeton):  # un admin ne se supprime pas lui-même : il perdrait son accès
+        return afficher_admin(id, erreur="Vous ne pouvez pas supprimer votre propre compte depuis l'administration.",
+                              code_http=403)
+
+    reponse_api = appel_api(API_USER, f"/api/users/{id}", methode="DELETE", jeton=jeton)
+    if reponse_api is not None and reponse_api.status_code == 401:
+        return redirect(url_for("login"))
+    if reponse_api is None or not reponse_api.ok:
+        message, code_http = erreur_api(reponse_api)
+        return afficher_admin(id, erreur=message, code_http=code_http)
+
+    return redirect(url_for("admin", supprime=1))

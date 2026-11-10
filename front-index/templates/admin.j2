@@ -5,6 +5,8 @@
   <span class="text-muted fs-6">{{ utilisateurs | length }} utilisateur{{ 's' if utilisateurs | length > 1 }}</span>
 </h1>
 
+{% if supprime %}<div class="alert alert-success">Utilisateur supprimé.</div>{% endif %}
+
 <div class="row g-4">
   <div class="col-md-5 col-lg-4">
     <div class="list-group shadow-sm">
@@ -64,7 +66,14 @@
             <div class="form-text">Le nouveau rôle s'applique à la prochaine connexion de l'utilisateur (jeton d'accès de 15 min).</div>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100">Enregistrer les modifications</button>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Enregistrer les modifications</button>
+            {% if selection != moi %}{# un admin ne peut pas se supprimer lui-même #}
+            <button type="submit" class="btn btn-outline-danger" formnovalidate
+                    formaction="{{ url_for('admin_supprimer_utilisateur', id=selection) }}"
+                    onclick="return confirm('Supprimer définitivement cet utilisateur ?')">Supprimer l'utilisateur</button>
+            {% endif %}
+          </div>
         </form>
       </div>
     </div>
