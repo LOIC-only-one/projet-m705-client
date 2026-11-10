@@ -36,45 +36,41 @@
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
   <nav class="mb-8 rounded-b-md border-b border-slate-300 bg-white">
-    <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3">
-      <a class="mr-4 text-lg font-semibold text-slate-900" href="{{ url_for('index') }}">Vidéothèque</a>
-      {% if connecte %}
-      <ul class="mr-auto flex gap-4 text-sm">
-        <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
-        <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
-      </ul>
-
-      <button id="dropdownDividerButton" data-dropdown-toggle="dropdownDivider" class="inline-flex items-center justify-center text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none" type="button">
-        Menu 
-        <svg class="w-4 h-4 ms-1.5 -me-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
-      </button>
-
-      <!-- Dropdown menu -->
-      <div id="dropdownDivider" class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base divide-y divide-default-medium shadow-lg w-44">
-          <form method="post" action="{{ url_for('logout') }}" class="flex items-center gap-4 text-sm">
-            <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDividerButton">
-              <li>
-                {% if admin %}<a class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded" href="{{ url_for('admin') }}">Administration</a>{% endif %}
-              </li>
-              <li>
-                <a class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Mon compte</a>
-              </li>
-            </ul>
-            <div class="p-2 text-sm text-body font-medium">
-              <button class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Déconnexion</button>
-            </div>
-          </form>
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between px-4 py-3">
+      <div class="flex items-center">
+        <a class="mr-6 text-lg font-semibold text-slate-900" href="{{ url_for('index') }}">Vidéothèque</a>
+        {% if connecte %}
+        <ul class="flex gap-4 text-sm">
+          <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
+          <li><a class="py-2 hover:text-blue-600 {{ 'font-semibold text-blue-600' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
+        </ul>
+        {% endif %}
       </div>
 
-      /* 
-      <form method="post" action="{{ url_for('logout') }}" class="flex items-center gap-4 text-sm">
-        {% if admin %}<a class="hover:text-blue-600" href="{{ url_for('admin') }}">Administration</a>{% endif %}
-        <a class="hover:text-blue-600" href="{{ url_for('account') }}">Mon compte</a>
-        <button class="text-slate-600 hover:text-blue-600">Déconnexion</button>
-      </form>
-      */
+      {% if connecte %}
+      <div class="relative">
+        <button id="dropdownDividerButton" class="inline-flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-blue-300 transition" type="button">
+          Menu 
+          <svg class="w-4 h-4 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
+        </button>
+
+        <!-- Dropdown menu -->
+        <div id="dropdownDivider" class="absolute right-0 mt-2 z-10 hidden bg-white border border-slate-200 rounded-lg divide-y divide-slate-200 shadow-lg w-44">
+          <ul class="p-2 text-sm text-slate-700 font-medium" aria-labelledby="dropdownDividerButton">
+            {% if admin %}
+            <li><a class="inline-flex items-center w-full p-2 hover:bg-slate-100 hover:text-slate-900 rounded" href="{{ url_for('admin') }}">Administration</a></li>
+            {% endif %}
+            <li><a class="inline-flex items-center w-full p-2 hover:bg-slate-100 hover:text-slate-900 rounded" href="#">Mon compte</a></li>
+          </ul>
+          <div class="p-2 text-sm text-slate-700 font-medium">
+            <form method="post" action="{{ url_for('logout') }}">
+              <button type="submit" class="inline-flex items-center w-full p-2 hover:bg-red-50 hover:text-red-600 rounded text-left text-red-500">Déconnexion</button>
+            </form>
+          </div>
+        </div>
+      </div>
       {% else %}
-      <div class="ml-auto flex gap-4 text-sm">
+      <div class="flex gap-4 text-sm">
         <a class="hover:text-blue-600" href="{{ url_for('login') }}">Connexion</a>
         <a class="font-medium text-blue-600 hover:text-blue-800" href="{{ url_for('register') }}">Inscription</a>
       </div>
@@ -86,5 +82,25 @@
     {% if erreur %}<div class="mb-6 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{{ erreur }}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Script pour gérer l'ouverture/fermeture du menu déroulant -->
+  <script>
+    const button = document.getElementById('dropdownDividerButton');
+    const menu = document.getElementById('dropdownDivider');
+
+    if (button && menu) {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+      });
+
+      // Fermer le menu si l'on clique en dehors
+      document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target) && !button.contains(e.target)) {
+          menu.classList.add('hidden');
+        }
+      });
+    }
+  </script>
 </body>
 </html>
