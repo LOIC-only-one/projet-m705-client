@@ -60,7 +60,7 @@
             {% if admin %}
             <li><a class="inline-flex items-center w-full p-2 hover:bg-slate-100 hover:text-slate-900 rounded" href="{{ url_for('admin') }}">Administration</a></li>
             {% endif %}
-            <li><a class="inline-flex items-center w-full p-2 hover:bg-slate-100 hover:text-slate-900 rounded" href="#">Mon compte</a></li>
+            <li><a class="inline-flex items-center w-full p-2 hover:bg-slate-100 hover:text-slate-900 rounded" href="{{ url_for('account') }}">Mon compte</a></li>
           </ul>
           <div class="p-2 text-sm text-slate-700 font-medium">
             <form method="post" action="{{ url_for('logout') }}">
