@@ -15,7 +15,7 @@
 <body class="bg-body-tertiary">
   <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
     <div class="container">
-      <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">🎬 Vidéothèque</a>
+      <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">Vidéothèque</a>
       {% if connecte %}
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Catalogue</a></li>
