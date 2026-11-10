@@ -25,6 +25,12 @@ def client():
     return app.test_client()
 
 
+LISTE = {"users": [
+    {"id": ID, "username": "quentin", "email": "q@q.pw"},
+    {"id": AUTRE, "username": "<b>marie</b>", "email": "m@q.pw"},
+]}
+
+
 def fausse_reponse_api(code_http, corps=None):
     reponse_api = requests.Response()
     reponse_api.status_code = code_http
@@ -50,21 +56,23 @@ def test_admin_sans_jeton_redirige_vers_login(client):
     assert page.headers["Location"].endswith("/login")
 
 
-def test_admin_liste_les_ids(client):
+def test_admin_liste_les_utilisateurs(client):
     connecte(client)
-    with patch("app.requests.get", return_value=fausse_reponse_api(200, {"ids": [ID, AUTRE]})) as faux_get:
+    with patch("app.requests.get", return_value=fausse_reponse_api(200, LISTE)) as faux_get:
         page = client.get("/admin")
 
     assert page.status_code == 200
     assert faux_get.call_args.args == ("http://api-user:8000/api/users",)
     assert faux_get.call_args.kwargs["headers"]["Authorization"] == "Bearer " + faux_jeton()
     assert f"/admin?user={ID}" in page.text and f"/admin?user={AUTRE}" in page.text
+    assert "quentin" in page.text and "q@q.pw" in page.text and "m@q.pw" in page.text
+    assert "&lt;b&gt;marie&lt;/b&gt;" in page.text  # échappé
     assert faux_get.call_count == 1  # pas de détail tant qu'aucun utilisateur n'est choisi
 
 
 def test_admin_clic_sur_un_user_affiche_son_formulaire(client):
     connecte(client)
-    reponses = [fausse_reponse_api(200, {"ids": [ID]}), fausse_reponse_api(200, {**COMPTE, "role": "admin"})]
+    reponses = [fausse_reponse_api(200, LISTE), fausse_reponse_api(200, {**COMPTE, "role": "admin"})]
     with patch("app.requests.get", side_effect=reponses) as faux_get:
         page = client.get(f"/admin?user={ID}")
 
@@ -99,7 +107,7 @@ def test_admin_id_mal_forme_404(client):
 def test_admin_user_inconnu_affiche_l_erreur_de_l_api(client):
     connecte(client)
     erreur = {"code": "UTILISATEUR_INTROUVABLE", "message": "Utilisateur introuvable."}
-    reponses = [fausse_reponse_api(200, {"ids": [ID]}), fausse_reponse_api(404, {"error": erreur})]
+    reponses = [fausse_reponse_api(200, LISTE), fausse_reponse_api(404, {"error": erreur})]
     with patch("app.requests.get", side_effect=reponses):
         page = client.get(f"/admin?user={AUTRE}")
 
@@ -146,7 +154,7 @@ def test_admin_modifier_erreur_garde_la_saisie(client):
     connecte(client)
     erreur = {"code": "COMPTE_EXISTANT", "message": "Email ou nom d'utilisateur déjà utilisé."}
     with patch("app.requests.patch", return_value=fausse_reponse_api(409, {"error": erreur})), \
-            patch("app.requests.get", return_value=fausse_reponse_api(200, {"ids": [ID]})):
+            patch("app.requests.get", return_value=fausse_reponse_api(200, LISTE)):
         page = client.post(f"/admin/users/{ID}", data={"username": "pris", "email": "q@q.pw", "role": "admin"})
 
     assert page.status_code == 409

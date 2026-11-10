@@ -2,15 +2,18 @@
 {% block title %}Administration · Vidéothèque{% endblock %}
 {% block content %}
 <h1 class="h3 mb-4">Administration
-  <span class="text-muted fs-6">{{ ids | length }} utilisateur{{ 's' if ids | length > 1 }}</span>
+  <span class="text-muted fs-6">{{ utilisateurs | length }} utilisateur{{ 's' if utilisateurs | length > 1 }}</span>
 </h1>
 
 <div class="row g-4">
   <div class="col-md-5 col-lg-4">
     <div class="list-group shadow-sm">
-      {% for id in ids %}
-      <a class="list-group-item list-group-item-action font-monospace small {{ 'active' if id == selection }}"
-         href="{{ url_for('admin', user=id) }}" {% if id == selection %}aria-current="true"{% endif %}>{{ id }}</a>
+      {% for u in utilisateurs %}
+      <a class="list-group-item list-group-item-action {{ 'active' if u.id == selection }}"
+         href="{{ url_for('admin', user=u.id) }}" {% if u.id == selection %}aria-current="true"{% endif %}>
+        <span class="fw-semibold">{{ u.username }}</span><br>
+        <span class="small opacity-75">{{ u.email }}</span>
+      </a>
       {% else %}
       <div class="list-group-item text-muted">Aucun utilisateur.</div>
       {% endfor %}
@@ -65,7 +68,7 @@
         </form>
       </div>
     </div>
-    {% elif ids %}
+    {% elif utilisateurs %}
     <p class="text-muted">Sélectionnez un utilisateur dans la liste pour afficher et modifier son compte.</p>
     {% endif %}
   </div>

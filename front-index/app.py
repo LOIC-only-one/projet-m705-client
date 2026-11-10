@@ -281,7 +281,7 @@ def id_valide(id):
 
 
 def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifie=False):
-    """Dashboard : liste des ids (GET /api/users) et, si un id est choisi, son formulaire (GET /api/users/<id>)."""
+    """Dashboard : liste des utilisateurs (GET /api/users) et, si un id est choisi, son formulaire (GET /api/users/<id>)."""
     jeton = jeton_acces()
     if not jeton:
         return redirect(url_for("login"))
@@ -291,8 +291,8 @@ def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifi
         return redirect(url_for("login"))
     if reponse_api is None or not reponse_api.ok:  # 403 pour un non-admin
         message, code_http = erreur_api(reponse_api)
-        return render_template("admin.j2", erreur=message, ids=[], selection=None, form={}), code_http
-    ids = reponse_api.json().get("ids", [])
+        return render_template("admin.j2", erreur=message, utilisateurs=[], selection=None, form={}), code_http
+    utilisateurs = reponse_api.json().get("users", [])
 
     if selection and form is None:
         reponse_api = appel_api(API_USER, f"/api/users/{selection}", methode="GET", jeton=jeton)
@@ -303,7 +303,7 @@ def afficher_admin(selection=None, erreur=None, form=None, code_http=200, modifi
             form = {}
         else:
             form = reponse_api.json()
-    return render_template("admin.j2", ids=ids, selection=selection, form=form or {}, erreur=erreur,
+    return render_template("admin.j2", utilisateurs=utilisateurs, selection=selection, form=form or {}, erreur=erreur,
                            modifie=modifie), code_http
 
 
