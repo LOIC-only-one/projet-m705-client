@@ -37,6 +37,12 @@
             <input type="text" class="form-control editable-field" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}" disabled>
           </div>
 
+          <div class="mb-3">
+            <label for="password" class="form-label">Mot de passe</label>
+            <input type="password" class="form-control" id="password" name="password" required minlength="12" autocomplete="new-password">
+            <div class="form-text">12 caractères minimum.</div>
+          </div>
+
           <!-- Bouton Enregistrer (caché par défaut) -->
           <div id="save-container" class="d-none">
             <button type="submit" class="btn btn-primary w-100">Enregistrer les modifications</button>

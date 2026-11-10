@@ -141,7 +141,7 @@ def account():
         return render_template("account.j2", form=reponse_api.json())
 
     # champs vides non envoyés : l'API refuse une date vide et le rôle n'est pas modifiable ici
-    champs = ("username", "email", "birthdate", "photo_profil")
+    champs = ("username", "email", "birthdate", "photo_profil", "password")
     modif_utilisateur = {c: request.form[c] for c in champs if request.form.get(c)}
     reponse_api = appel_api(API_USER, f"/api/users/{id_user}", modif_utilisateur, methode="PATCH", jeton=jeton)
     if reponse_api is None or not reponse_api.ok:
