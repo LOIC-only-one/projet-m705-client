@@ -11,6 +11,7 @@
     {% else %}
     <div class="affiche-vide flex items-center justify-center rounded bg-slate-200 text-slate-500">Pas d'affiche</div>
     {% endif %}
+    <div class="mt-4">{{ f.actions(film, depuis="fiche", possession=True) }}</div>
   </div>
   <div class="md:col-span-2">
     <h1 class="mb-1 text-2xl font-semibold">{{ film.titre }}</h1>
@@ -28,7 +29,7 @@
       </div>
     </div>
     {% endif %}
-    <div class="mt-4 flex flex-wrap gap-2">{{ f.actions(film, depuis="fiche", taille="") }}</div>
+    <div class="mt-4 flex flex-wrap gap-2">{{ f.actions(film, depuis="fiche", taille="", possession=False) }}</div>
   </div>
 </div>
 {% endif %}

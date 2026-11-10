@@ -1,75 +1,72 @@
 {% extends "base.j2" %}
 {% block title %}Mon compte · Vidéothèque{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-xl">
-    <div class="rounded-lg bg-white p-6 shadow">
-        <div class="mb-5 flex items-center justify-between">
-          <h1 class="text-xl font-semibold">Mon compte</h1>
-          <!-- Bouton pour activer l'édition de tous les champs -->
-          <button type="button" class="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50" id="enable-edit-btn" onclick="toggleEditMode()">
-            Modifier le profil
-          </button>
-        </div>
-
-
-        <form method="POST">
-          <div class="mb-4">
-            <label for="username" class="mb-1 block text-sm font-medium">Nom d'utilisateur</label>
-            <input class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="username" name="username" value="{{ form.get('username', '') }}" required
-                   pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="username" disabled>
-            <div class="mt-1 text-sm text-slate-500">3 à 50 caractères : lettres, chiffres, _ . -</div>
-          </div>
-
-          <div class="mb-4">
-            <label for="email" class="mb-1 block text-sm font-medium">Email</label>
-            <input type="email" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="email" disabled>
-          </div>
-
-          <div class="mb-4">
-            <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
-            <input type="date" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required disabled>
-          </div>
-
-          <div class="mb-4">
-            <label for="photo_profil" class="mb-1 block text-sm font-medium">Photo de profil (URL)</label>
-            <input type="text" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}" disabled>
-          </div>
-
-          <div class="mb-4">
-            <label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label>
-            <input type="password" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="password" name="password" required minlength="12" autocomplete="new-password" placeholder="************" disabled>
-            <div class="mt-1 text-sm text-slate-500">12 caractères minimum.</div>
-          </div>
-
-          <!-- Bouton Enregistrer (caché par défaut) -->
-          <div id="save-container" class="hidden">
-            <button type="submit" class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500">Enregistrer les modifications</button>
-          </div>
-        </form>
-      </div>
+<div class="mx-auto max-w-xl space-y-6">
+  <section class="rounded-lg bg-white p-6 shadow">
+    <div class="mb-5 flex items-center justify-between">
+      <h1 class="text-xl font-semibold">Mon compte</h1>
+      <button type="button" class="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50" id="enable-edit-btn" onclick="toggleEditMode()">Modifier le profil</button>
     </div>
-  </div>
+    <form method="post">
+      <div class="mb-4">
+        <label for="username" class="mb-1 block text-sm font-medium">Nom d'utilisateur</label>
+        <input class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="username" name="username" value="{{ form.get('username', '') }}" required pattern="[A-Za-z0-9_.\-]{3,50}" autocomplete="username" disabled>
+      </div>
+      <div class="mb-4">
+        <label for="email" class="mb-1 block text-sm font-medium">Email</label>
+        <input type="email" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="255" autocomplete="email" disabled>
+      </div>
+      <div class="mb-4">
+        <label for="birthdate" class="mb-1 block text-sm font-medium">Date de naissance</label>
+        <input type="date" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="birthdate" name="birthdate" value="{{ form.get('birthdate', '') }}" required disabled>
+      </div>
+      <div class="mb-4">
+        <label for="photo_profil" class="mb-1 block text-sm font-medium">Photo de profil (URL)</label>
+        <input type="text" class="editable-field w-full rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100" id="photo_profil" name="photo_profil" value="{{ form.get('photo_profil') or '' }}" disabled>
+      </div>
+      <div id="save-container" class="hidden">
+        <button type="submit" class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500">Enregistrer les modifications</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="rounded-lg bg-white p-6 shadow">
+    <h2 class="mb-4 text-lg font-semibold">Changer mon mot de passe</h2>
+    <form method="post" action="{{ url_for('changer_mot_de_passe') }}" class="space-y-4">
+      <div><label for="password" class="mb-1 block text-sm font-medium">Mot de passe</label><input type="password" id="password" name="password" class="w-full rounded border border-slate-300 px-3 py-2" required autocomplete="current-password"></div>
+      <div><label for="new_password" class="mb-1 block text-sm font-medium">Nouveau mot de passe</label><input type="password" id="new_password" name="new_password" class="w-full rounded border border-slate-300 px-3 py-2" required minlength="12" autocomplete="new-password"></div>
+      <div><label for="confirm_password" class="mb-1 block text-sm font-medium">Confirmer le nouveau mot de passe</label><input type="password" id="confirm_password" name="confirm_password" class="w-full rounded border border-slate-300 px-3 py-2" required minlength="12" autocomplete="new-password"></div>
+      <button type="submit" class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-500" onclick="return confirmPassword()">Changer mon mot de passe</button>
+    </form>
+  </section>
+
+  <section class="rounded-lg border border-red-200 bg-red-50 p-6">
+    <h2 class="mb-2 text-lg font-semibold text-red-900">Supprimer mon compte</h2>
+    <p class="mb-4 text-sm text-red-800">Cette action est définitive et supprimera aussi votre vidéothèque et vos emprunts.</p>
+    <button type="button" class="rounded border border-red-300 px-4 py-2 text-red-700 hover:bg-red-100" onclick="document.getElementById('delete-account-dialog').showModal()">Supprimer mon compte</button>
+  </section>
 </div>
 
+<dialog id="delete-account-dialog" class="rounded-lg p-0 shadow-xl backdrop:bg-slate-950/50">
+  <form method="post" action="{{ url_for('supprimer_compte') }}" class="w-80 space-y-4 p-6">
+    <h2 class="text-lg font-semibold">Êtes-vous sûr ?</h2>
+    <p class="text-sm text-slate-600">Confirmez votre identité avec votre mot de passe pour supprimer définitivement votre compte.</p>
+    <input type="password" name="password" class="w-full rounded border border-slate-300 px-3 py-2" required autocomplete="current-password" placeholder="Mot de passe">
+    <div class="flex justify-end gap-2"><button type="button" class="rounded border px-3 py-2" onclick="this.closest('dialog').close()">Annuler</button><button class="rounded bg-red-600 px-3 py-2 text-white hover:bg-red-500">Supprimer définitivement</button></div>
+  </form>
+</dialog>
 <script>
 function toggleEditMode() {
-    const fields = document.querySelectorAll('.editable-field');
-    const saveContainer = document.getElementById('save-container');
-    const editBtn = document.getElementById('enable-edit-btn');
-    
-    fields.forEach(field => {
-        field.disabled = !field.disabled;
-    });
-
-    saveContainer.classList.toggle('hidden');
-    
-    if (saveContainer.classList.contains('hidden')) {
-        editBtn.innerHTML = 'Modifier le profil';
-        editBtn.classList.replace('border-red-300', 'border-slate-300');
-    } else {
-        editBtn.innerHTML = 'Annuler';
-        editBtn.classList.replace('border-slate-300', 'border-red-300');
-    }
+  const fields = document.querySelectorAll('.editable-field');
+  const save = document.getElementById('save-container');
+  fields.forEach(field => { field.disabled = !field.disabled; });
+  save.classList.toggle('hidden');
+  document.getElementById('enable-edit-btn').textContent = save.classList.contains('hidden') ? 'Modifier le profil' : 'Annuler';
+}
+function confirmPassword() {
+  const matches = document.getElementById('new_password').value === document.getElementById('confirm_password').value;
+  if (!matches) alert('Les deux nouveaux mots de passe doivent être identiques.');
+  return matches;
 }
 </script>
 {% endblock %}

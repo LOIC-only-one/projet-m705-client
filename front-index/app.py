@@ -266,7 +266,7 @@ def account():
         return render_template("account.j2", form=reponse_api.json())
 
     # champs vides non envoyés : l'API refuse une date vide et le rôle n'est pas modifiable ici
-    champs = ("username", "email", "birthdate", "photo_profil", "password")
+    champs = ("username", "email", "birthdate", "photo_profil")
     modif_utilisateur = {c: request.form[c] for c in champs if request.form.get(c)}
     reponse_api = appel_api(API_USER, f"/api/users/{id_user}", modif_utilisateur, methode="PATCH", jeton=jeton)
     if reponse_api is None or not reponse_api.ok:
@@ -274,6 +274,42 @@ def account():
         return render_template("account.j2", erreur=message, form=request.form), code_http
 
     return redirect(url_for("account"))
+
+
+@app.post("/account/password")
+def changer_mot_de_passe():
+    jeton = jeton_acces()
+    id_user = id_utilisateur(jeton) if jeton else None
+    if id_user is None:
+        return redirect(url_for("login"))
+    donnees = {
+        "current_password": request.form.get("password", ""),
+        "new_password": request.form.get("new_password", ""),
+    }
+    reponse_api = appel_api(API_USER, f"/api/users/{id_user}/password", donnees, jeton=jeton)
+    if reponse_api is None or not reponse_api.ok:
+        message, code_http = erreur_api(reponse_api)
+        return render_template("account.j2", erreur=message, form=request.form), code_http
+    return redirect(url_for("account"))
+
+
+@app.post("/account/supprimer")
+def supprimer_compte():
+    jeton = jeton_acces()
+    id_user = id_utilisateur(jeton) if jeton else None
+    if id_user is None:
+        return redirect(url_for("login"))
+    reponse_api = appel_api(
+        API_USER, f"/api/users/{id_user}", {"current_password": request.form.get("password", "")},
+        methode="DELETE", jeton=jeton,
+    )
+    if reponse_api is None or not reponse_api.ok:
+        message, code_http = erreur_api(reponse_api)
+        return render_template("account.j2", erreur=message, form=request.form), code_http
+    reponse = redirect(url_for("index"))
+    reponse.delete_cookie("access_token", httponly=True, secure=request.is_secure, samesite="Strict")
+    reponse.delete_cookie("refresh_token", httponly=True, secure=request.is_secure, samesite="Strict")
+    return reponse
 
 
 def id_valide(id):

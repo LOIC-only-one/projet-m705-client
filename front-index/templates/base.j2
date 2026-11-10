@@ -39,6 +39,7 @@
         <li><a class="inline-block rounded-lg px-3 py-2 hover:bg-white/10 hover:text-white {{ 'bg-white/10 font-semibold text-white' if request.endpoint == 'videotheque' }}" href="{{ url_for('videotheque') }}">Ma vidéothèque</a></li>
       </ul>
       <form method="post" action="{{ url_for('logout') }}" class="flex gap-2">
+        {% if admin %}<a class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 hover:bg-white/10" href="{{ url_for('admin') }}">Administration</a>{% endif %}
         <a class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 hover:bg-white/10" href="{{ url_for('account') }}">Mon compte</a>
         <button class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 hover:bg-white/10">Déconnexion</button>
       </form>
