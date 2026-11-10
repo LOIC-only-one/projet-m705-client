@@ -53,7 +53,16 @@ def health():
 
 @app.get("/")
 def index():
-    return render_template("index.j2")
+    films = []
+    erreur = None
+    jeton = request.cookies.get("access_token")
+    if jeton:
+        reponse_api = appel_api(API_CATALOG, "/api/films", methode="GET", jeton=jeton)
+        if reponse_api is None or not reponse_api.ok:
+            erreur, _ = erreur_api(reponse_api)
+        else:
+            films = reponse_api.json().get("films", [])
+    return render_template("index.j2", films=films, erreur_films=erreur)
 
 
 @app.route("/login", methods=["GET", "POST"])

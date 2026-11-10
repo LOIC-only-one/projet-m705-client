@@ -3,7 +3,33 @@
 <div class="p-5 bg-white rounded shadow-sm">
   <h1 class="display-6">Bienvenue à la vidéothèque</h1>
   <p class="lead text-muted">
-    {% if connecte %}Vous êtes connecté.{% else %}Connectez-vous ou créez un compte pour emprunter des films.{% endif %}
+    {% if connecte %}Découvrez les films disponibles.{% else %}Connectez-vous ou créez un compte pour emprunter des films.{% endif %}
   </p>
 </div>
+{% if connecte %}
+<section class="mt-4">
+  <h2 class="h4">Films disponibles</h2>
+  {% if erreur_films %}
+  <div class="alert alert-danger" role="alert">{{ erreur_films }}</div>
+  {% elif films %}
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4">
+    {% for film in films %}
+    <article class="col">
+      <div class="card h-100 shadow-sm">
+        {% if film.affiche %}
+        <img src="{{ film.affiche }}" class="card-img-top" alt="Affiche de {{ film.titre }}">
+        {% endif %}
+        <div class="card-body">
+          <h3 class="h6 card-title">{{ film.titre }}</h3>
+          <p class="card-text text-muted small">{{ film.annee }}</p>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted">Aucun film disponible.</p>
+  {% endif %}
+</section>
+{% endif %}
 {% endblock %}

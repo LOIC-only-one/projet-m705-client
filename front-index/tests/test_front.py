@@ -30,6 +30,18 @@ def test_pages(client, url):
     assert client.get(url).status_code == 200
 
 
+def test_index_films(client):
+    client.set_cookie("access_token", JETON)
+    client.set_cookie("refresh_token", "refresh")
+    films = {"films": [{"id": 155, "titre": "The Dark Knight", "annee": 2008, "affiche": None}]}
+    with patch("app.requests.get", return_value=fausse_reponse_api(200, films)) as faux_get:
+        reponse = client.get("/")
+    assert reponse.status_code == 200
+    assert b"The Dark Knight" in reponse.data
+    assert faux_get.call_args.args[0].endswith("/api/films")
+    assert faux_get.call_args.kwargs["headers"]["Authorization"] == "Bearer " + JETON
+
+
 def test_autoescape():
     with app.test_request_context():
         assert app.jinja_env.from_string("{{ x }}").render(x="<b>") == "&lt;b&gt;"
