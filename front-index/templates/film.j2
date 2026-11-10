@@ -18,6 +18,16 @@
     <p>{% for g in film.genres %}<a class="mr-1 inline-block rounded-full border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50" href="{{ url_for('index', genre=g) }}">{{ g }}</a>{% endfor %}</p>
     <p class="my-4">{{ f.statut(film) }}</p>
     <p class="text-lg text-slate-600">{{ film.synopsis or "Pas de synopsis disponible." }}</p>
+    {% if film.bande_annonce %}
+    <div class="mt-8">
+      <h2 class="mb-3 text-lg font-semibold">Bande-annonce</h2>
+      <div class="aspect-video overflow-hidden rounded-xl bg-slate-950 shadow-lg">
+        <iframe class="h-full w-full" src="{{ film.bande_annonce }}" title="Bande-annonce de {{ film.titre }}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen loading="lazy"></iframe>
+      </div>
+    </div>
+    {% endif %}
     <div class="mt-4 flex flex-wrap gap-2">{{ f.actions(film, depuis="fiche", taille="") }}</div>
   </div>
 </div>
