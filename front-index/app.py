@@ -18,21 +18,20 @@ API_USER = os.environ.get("API_USER_URL", "http://api-user:8000")
 API_CATALOG = os.environ.get("API_CATALOG_URL", "http://api-catalogue:8000")
 
 
-def appel_api(api, route, donnees=None, cookies=None, methode="POST", jeton=None):
-    # on transmet l'ip du client pour le rate limit de api-auth
-    headers = {"X-Forwarded-For": request.remote_addr}
+def appel_api(api, route, donnees=None, methode="POST", jeton=None):
+    """Appelle une API en JSON. Renvoie la réponse, ou None si l'API est injoignable."""
+    headers = {"X-Forwarded-For": request.remote_addr}  # vraie IP du client, pour le rate limit d'api-auth
     if jeton:
         headers["Authorization"] = "Bearer " + jeton
     try:
-        timeout = 180 if api == API_CATALOG else 5
-        return getattr(requests, methode.lower())(
-            api + route, json=donnees, cookies=cookies, headers=headers, timeout=timeout
-        )
+        # timeout long : au premier lancement, api-catalogue importe les films depuis TMDB
+        return getattr(requests, methode.lower())(api + route, json=donnees, headers=headers, timeout=30)
     except requests.RequestException:
         return None
 
 
 def erreur_api(reponse_api):
+    """Message à afficher et code HTTP, à partir d'une réponse d'erreur { "error": {code, message} }."""
     if reponse_api is None:
         return "Service indisponible.", 503
     try:
@@ -47,42 +46,52 @@ def erreur_api(reponse_api):
     return message, reponse_api.status_code
 
 
-def poser_cookies(reponse, jetons, refresh_token):
-    """Cookies de session du front (HttpOnly : inaccessibles au JavaScript)."""
-    reponse.set_cookie("access_token", jetons["access_token"], max_age=jetons["expires_in"],
-                       httponly=True, secure=request.is_secure, samesite="Strict")
-    reponse.set_cookie("refresh_token", refresh_token, max_age=7 * 24 * 3600,
-                       httponly=True, secure=request.is_secure, samesite="Strict")
+# Les deux jetons sont gardés dans des cookies HttpOnly (illisibles en JavaScript) du front.
+def poser_cookies(reponse, jetons):
+    options = {"httponly": True, "secure": request.is_secure, "samesite": "Strict"}
+    reponse.set_cookie("access_token", jetons["access_token"], max_age=jetons["expires_in"], **options)
+    reponse.set_cookie("refresh_token", jetons["refresh_token"], max_age=7 * 24 * 3600, **options)
+    return reponse
+
+
+def effacer_cookies(reponse):
+    for nom in ("access_token", "refresh_token"):
+        reponse.delete_cookie(nom, httponly=True, secure=request.is_secure, samesite="Strict")
     return reponse
 
 
 @app.before_request
 def rafraichir_jeton():
-    """Le cookie access_token disparaît à l'expiration du jeton (15 min) : on en redemande un avec le refresh_token."""
+    """Le cookie access_token disparaît au bout de 15 min : on en redemande un à api-auth avec le refresh_token."""
     # shortcut: deux pages chargées au même instant peuvent toutes deux tenter la rotation ; la 2e déconnecte.
     # Acceptable pour un front sans JavaScript, à revoir si des appels parallèles apparaissent.
-    g.jetons = None
+    g.nouveaux_jetons = None
+    g.deconnecte = False
     if request.endpoint in (None, "static", "health", "logout", "login") \
             or "access_token" in request.cookies or "refresh_token" not in request.cookies:
         return
-    reponse_api = appel_api(API_AUTH, "/api/auth/refresh", cookies={"refresh_token": request.cookies["refresh_token"]})
-    if reponse_api is not None and reponse_api.ok:
-        g.jetons = (reponse_api.json(), reponse_api.cookies["refresh_token"])
-    elif reponse_api is not None:
-        g.jetons = False  # session expirée ou révoquée : on déconnecte
+    reponse_api = appel_api(API_AUTH, "/api/auth/refresh", jeton=request.cookies["refresh_token"])
+    if reponse_api is None:
+        return  # api-auth injoignable : on réessaiera à la page suivante
+    if reponse_api.ok:
+        g.nouveaux_jetons = reponse_api.json()
+    else:
+        g.deconnecte = True  # refresh_token expiré ou révoqué
 
 
 @app.after_request
 def enregistrer_jetons(reponse):
-    if g.get("jetons"):
-        poser_cookies(reponse, *g.jetons)
-    elif g.get("jetons") is False:
-        reponse.delete_cookie("refresh_token", httponly=True, secure=request.is_secure, samesite="Strict")
+    if g.get("nouveaux_jetons"):
+        poser_cookies(reponse, g.nouveaux_jetons)
+    if g.get("deconnecte"):
+        effacer_cookies(reponse)
     return reponse
 
 
 def jeton_acces():
-    return g.jetons[0]["access_token"] if g.get("jetons") else request.cookies.get("access_token")
+    if g.get("nouveaux_jetons"):
+        return g.nouveaux_jetons["access_token"]
+    return request.cookies.get("access_token")
 
 
 def profil_navbar(jeton):
@@ -105,7 +114,7 @@ def profil_navbar(jeton):
 def utilisateur_connecte():
     # "admin" sert seulement à afficher le lien du menu : l'API vérifie le jeton et refuse (403) les non-admins
     jeton = jeton_acces()
-    connecte = "refresh_token" in request.cookies and g.get("jetons") is not False
+    connecte = "refresh_token" in request.cookies and not g.get("deconnecte")
     profil = profil_navbar(jeton) if connecte and jeton else {}
     return {"connecte": connecte,
             "admin": charge_jeton(jeton or "").get("role") == "admin",
@@ -118,136 +127,107 @@ def health():
     return {"status": "ok"}
 
 
-def lire_catalogue(route, jeton):
-    """GET sur api-catalogue : (données, None) ou ({}, message d'erreur)."""
-    reponse_api = appel_api(API_CATALOG, route, methode="GET", jeton=jeton)
+#### Pages qui utilisent api-catalogue
+def appel_catalogue(methode, route, donnees=None):
+    """Appel à api-catalogue avec le jeton de l'utilisateur. Renvoie (données, None) ou ({}, message d'erreur)."""
+    reponse_api = appel_api(API_CATALOG, route, donnees, methode=methode, jeton=jeton_acces())
     if reponse_api is None or not reponse_api.ok:
         return {}, erreur_api(reponse_api)[0]
+    if reponse_api.status_code == 204:  # DELETE : pas de corps
+        return {}, None
     return reponse_api.json(), None
 
 
-def page_precedente(defaut):
-    """Revient sur la page d'où vient le formulaire (filtres compris), seulement si elle est sur ce site."""
+def page_precedente():
+    """Page d'où vient le formulaire (catalogue filtré, fiche...), seulement si elle est sur ce site."""
     ref = urlsplit(request.referrer or "")
-    if ref.netloc != request.host or not ref.path.startswith("/") or ref.path.startswith("//"):
-        return defaut
+    if ref.netloc != request.host or not ref.path:
+        return url_for("catalogue")
     return ref.path + ("?" + ref.query if ref.query else "")
 
 
-def action_catalogue(route, page, donnees=None, methode="POST", **args_page):
-    """POST/DELETE sur api-catalogue puis retour à la page ; en cas d'erreur, la page s'affiche avec le message."""
-    jeton = jeton_acces()
-    if not jeton:
-        return redirect(url_for("login"))
-    reponse_api = appel_api(API_CATALOG, route, donnees, methode=methode, jeton=jeton)
-    if reponse_api is None or not reponse_api.ok:
-        return page(erreur=erreur_api(reponse_api)[0], **args_page)
-    return redirect(page_precedente(url_for(page.__name__, **args_page)))
-
-
-def action_film(route):
-    """Emprunter / déclarer un film, depuis le catalogue ou depuis sa fiche."""
-    film_id = request.form.get("film_id", type=int)
-    if request.form.get("depuis") == "fiche" and film_id:
-        return action_catalogue(route, film, {"film_id": film_id}, film_id=film_id)
-    return action_catalogue(route, index, {"film_id": film_id})
-
-
-def charger_films(filtres, dispo, page=1, per_page=20):
-    jeton = jeton_acces()
-    if not jeton:
-        return [], [], {}, None
-    params_dict = dict(filtres)
-    params_dict["page"] = page
-    params_dict["per_page"] = per_page
-    params = urlencode(params_dict)
-    donnees, erreur = lire_catalogue("/api/films" + ("?" + params if params else ""), jeton)
-    films = []
-    for film_data in donnees.get("films", []):
-        if film_data.get("disponibles") or not dispo:
-            films.append(film_data)
-    return films, donnees.get("genres", []), donnees, erreur
-
-
 @app.get("/")
-def index(erreur=None):
-    if request.args.get("q") or request.args.get("genre") or request.args.get("dispo"):
-        return redirect(url_for("catalogue", **request.args))
-    films, unused_genres, donnees, erreur_films = charger_films({}, False, per_page=20)
-    sections = []
-    for start in range(0, min(len(films), 20), 5):
-        sections.append(films[start:start + 5])
-    return render_template("index.j2", sections=sections, erreur=erreur or erreur_films,
-                           total=donnees.get("total", 0))
+def index():
+    if not jeton_acces():
+        return render_template("index.j2", sections=[], total=0)  # page d'accueil des visiteurs
+    donnees, erreur = appel_catalogue("GET", "/api/films?per_page=20")
+    films = donnees.get("films", [])
+    sections = [films[i:i + 5] for i in range(0, len(films), 5)]  # 4 rangées de 5 films
+    return render_template("index.j2", sections=sections, total=donnees.get("total", 0), erreur=erreur)
 
 
 @app.get("/catalogue")
-def catalogue(erreur=None):
-    filtres = {"q": request.args.get("q", "").strip(), "genre": request.args.get("genre", "")}
+def catalogue():
+    if not jeton_acces():
+        return redirect(url_for("login"))
+    q = request.args.get("q", "").strip()
+    genre = request.args.get("genre", "")
     dispo = request.args.get("dispo") == "1"
     page = max(request.args.get("page", 1, type=int), 1)
-    films, genres, donnees, erreur_films = charger_films(filtres, dispo, page=page)
-    if donnees.get("pages") and page > donnees["pages"]:
-        return redirect(url_for("catalogue", **filtres, dispo="1" if dispo else None, page=donnees["pages"]))
-    return render_template("catalogue.j2", films=films, genres=genres, dispo=dispo,
-                           page=page, pages=donnees.get("pages", 0), total=donnees.get("total", 0),
-                           erreur=erreur or erreur_films, **filtres)
+    donnees, erreur = appel_catalogue("GET", "/api/films?" + urlencode({"q": q, "genre": genre, "page": page}))
+    films = donnees.get("films", [])
+    if dispo:  # shortcut: filtré côté front, une page peut donc avoir moins de 20 films ; à passer dans l'API sinon
+        films = [film for film in films if film["disponibles"]]
+    return render_template("catalogue.j2", films=films, genres=donnees.get("genres", []), q=q, genre=genre,
+                           dispo=dispo, page=page, pages=donnees.get("pages", 0), total=donnees.get("total", 0),
+                           erreur=erreur)
 
 
 @app.get("/films/<int:film_id>")
 def film(film_id, erreur=None):
-    jeton = jeton_acces()
-    if not jeton:
+    if not jeton_acces():
         return redirect(url_for("login"))
-    donnees, erreur_film = lire_catalogue(f"/api/films/{film_id}", jeton)
-    return render_template("film.j2", film=donnees or None, erreur=erreur or erreur_film)
+    donnees, erreur_api_film = appel_catalogue("GET", f"/api/films/{film_id}")
+    return render_template("film.j2", film=donnees or None, erreur=erreur or erreur_api_film)
 
 
 @app.get("/videotheque")
 def videotheque(erreur=None):
-    jeton = jeton_acces()
-    if not jeton:
+    if not jeton_acces():
         return redirect(url_for("login"))
-    exemplaires, erreur_ex = lire_catalogue("/api/exemplaires", jeton)
-    emprunts, erreur_emp = lire_catalogue("/api/emprunts", jeton)
-    liste_emprunts = emprunts.get("emprunts", [])
-    en_cours = []
-    historique = []
-    for emprunt in liste_emprunts:
-        if emprunt.get("date_retour"):
-            historique.append(emprunt)
-        else:
-            en_cours.append(emprunt)
+    exemplaires, erreur_ex = appel_catalogue("GET", "/api/exemplaires")
+    emprunts, erreur_emp = appel_catalogue("GET", "/api/emprunts")
+    emprunts = emprunts.get("emprunts", [])
     return render_template("videotheque.j2", exemplaires=exemplaires.get("exemplaires", []),
-                           en_cours=en_cours, historique=historique,
+                           en_cours=[e for e in emprunts if not e["date_retour"]],
+                           historique=[e for e in emprunts if e["date_retour"]],
                            erreur=erreur or erreur_ex or erreur_emp)
+
+
+# Actions (formulaires POST). Succès : retour à la page d'origine. Erreur : la page s'affiche avec le message.
+@app.post("/emprunts")
+def emprunter():
+    film_id = request.form.get("film_id", type=int)
+    _, erreur = appel_catalogue("POST", "/api/emprunts", {"film_id": film_id})
+    return film(film_id, erreur=erreur) if erreur else redirect(page_precedente())
 
 
 @app.post("/exemplaires")
 def ajouter_exemplaire():
-    return action_film("/api/exemplaires")
+    film_id = request.form.get("film_id", type=int)
+    _, erreur = appel_catalogue("POST", "/api/exemplaires", {"film_id": film_id})
+    return film(film_id, erreur=erreur) if erreur else redirect(page_precedente())
 
 
 @app.post("/exemplaires/<id>/supprimer")
 def supprimer_exemplaire(id):
-    return action_catalogue(f"/api/exemplaires/{quote(id)}", videotheque, methode="DELETE")
-
-
-@app.post("/emprunts")
-def emprunter():
-    return action_film("/api/emprunts")
+    _, erreur = appel_catalogue("DELETE", f"/api/exemplaires/{quote(id)}")
+    return videotheque(erreur=erreur) if erreur else redirect(url_for("videotheque"))
 
 
 @app.post("/emprunts/<id>/prolongation")
 def prolonger(id):
-    return action_catalogue(f"/api/emprunts/{quote(id)}/prolongation", videotheque)
+    _, erreur = appel_catalogue("POST", f"/api/emprunts/{quote(id)}/prolongation")
+    return videotheque(erreur=erreur) if erreur else redirect(url_for("videotheque"))
 
 
 @app.post("/emprunts/<id>/retour")
 def rendre(id):
-    return action_catalogue(f"/api/emprunts/{quote(id)}/retour", videotheque)
+    _, erreur = appel_catalogue("POST", f"/api/emprunts/{quote(id)}/retour")
+    return videotheque(erreur=erreur) if erreur else redirect(url_for("videotheque"))
 
 
+#### Compte (api-auth et api-user)
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
@@ -260,7 +240,7 @@ def login():
         message, code_http = erreur_api(reponse_api)
         return render_template("login.j2", erreur=message, email=email), code_http
 
-    return poser_cookies(redirect(url_for("index")), reponse_api.json(), reponse_api.cookies["refresh_token"])
+    return poser_cookies(redirect(url_for("index")), reponse_api.json())
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -292,12 +272,8 @@ def register():
 def logout():
     refresh_token = request.cookies.get("refresh_token")
     if refresh_token:
-        appel_api(API_AUTH, "/api/auth/logout", cookies={"refresh_token": refresh_token})
-
-    redirection = redirect(url_for("index"))
-    redirection.delete_cookie("access_token", httponly=True, secure=request.is_secure, samesite="Strict")
-    redirection.delete_cookie("refresh_token", httponly=True, secure=request.is_secure, samesite="Strict")
-    return redirection
+        appel_api(API_AUTH, "/api/auth/logout", jeton=refresh_token)  # révoque le refresh_token côté serveur
+    return effacer_cookies(redirect(url_for("index")))
 
 
 def charge_jeton(jeton):
@@ -368,10 +344,7 @@ def supprimer_compte():
     if reponse_api is None or not reponse_api.ok:
         message, code_http = erreur_api(reponse_api)
         return render_template("account.j2", erreur=message, form=request.form), code_http
-    reponse = redirect(url_for("index"))
-    reponse.delete_cookie("access_token", httponly=True, secure=request.is_secure, samesite="Strict")
-    reponse.delete_cookie("refresh_token", httponly=True, secure=request.is_secure, samesite="Strict")
-    return reponse
+    return effacer_cookies(redirect(url_for("index")))
 
 
 def id_valide(id):

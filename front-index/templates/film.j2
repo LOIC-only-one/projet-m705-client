@@ -13,12 +13,12 @@
     {% else %}
     <div class="affiche-vide flex items-center justify-center rounded bg-slate-200 text-slate-500">Pas d'affiche</div>
     {% endif %}
-    <div class="mt-4">{{ f.actions(film, depuis="fiche", possession=True) }}</div>
+    <div class="mt-4">{{ f.actions(film, possession=True) }}</div>
   </div>
   <div class="md:col-span-2">
     <h1 class="mb-1 text-2xl font-semibold">{{ film.titre }}</h1>
     <p class="text-slate-500">{{ film.annee }}</p>
-    <p>{% for g in film.genres %}<a class="mr-1 inline-block rounded-full border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50" href="{{ url_for('index', genre=g) }}">{{ g }}</a>{% endfor %}</p>
+    <p>{% for g in film.genres %}<a class="mr-1 inline-block rounded-full border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50" href="{{ url_for('catalogue', genre=g) }}">{{ g }}</a>{% endfor %}</p>
     <p class="my-4">{{ f.statut(film) }}</p>
     <p class="text-lg text-slate-600">{{ film.synopsis or "Pas de synopsis disponible." }}</p>
     {% if film.bande_annonce %}
@@ -31,7 +31,7 @@
       </div>
     </div>
     {% endif %}
-    <div class="mt-4 flex flex-wrap gap-2">{{ f.actions(film, depuis="fiche", taille="", possession=False) }}</div>
+    <div class="mt-4 flex flex-wrap gap-2">{{ f.actions(film, taille="", possession=False) }}</div>
   </div>
 </div>
 {% endif %}

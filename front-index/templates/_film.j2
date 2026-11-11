@@ -8,18 +8,18 @@
   {% endif %}
 {% endmacro %}
 
-{% macro actions(film, depuis="catalogue", taille="", possession=True) %}
+{% macro actions(film, taille="", possession=True) %}
   {% if film.emprunte %}
   <a class="ui-action border border-cyan-500 px-3 py-1.5 text-sm text-cyan-700 hover:bg-cyan-50 {{ taille }}" href="{{ url_for('videotheque') }}">Voir mes emprunts</a>
   {% elif not film.possede %}
     {% if film.disponibles and film.empruntable %}
     <form method="post" action="{{ url_for('emprunter') }}" class="grid">
-      <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
+      <input type="hidden" name="film_id" value="{{ film.id }}">
       <button class="ui-action bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 {{ taille }}">Emprunter</button>
     </form>
     {% endif %}
     {% if possession %}<form method="post" action="{{ url_for('ajouter_exemplaire') }}" class="grid">
-      <input type="hidden" name="film_id" value="{{ film.id }}"><input type="hidden" name="depuis" value="{{ depuis }}">
+      <input type="hidden" name="film_id" value="{{ film.id }}">
       <button class="ui-action border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 {{ taille }}">J'ai ce film</button>
     </form>{% endif %}
   {% endif %}
