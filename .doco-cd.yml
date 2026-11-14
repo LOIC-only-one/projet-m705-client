@@ -1,6 +1,0 @@
-name: projet-m705
-reference: main
-repository_url: https://github.com/LOIC-only-one/projet-m705-serveur.git
-compose_files:
-  - stack.production.yml
-force_image_pull: true
