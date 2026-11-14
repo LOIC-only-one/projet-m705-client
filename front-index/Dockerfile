@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-LABEL org.opencontainers.image.source=https://github.com/LOIC-only-one/front-index
+LABEL org.opencontainers.image.source=https://github.com/LOIC-only-one/projet-m705-client
 
 WORKDIR /app
 

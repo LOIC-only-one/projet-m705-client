@@ -22,7 +22,6 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: ./front-index
-          file: ./front-index/Dockerfile
           push: true
           tags: |
             ghcr.io/loic-only-one/videotheque-front-index:${{ github.sha }}
